@@ -2199,6 +2199,9 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
   uint8_t group_num = 0;
 	
 	
+	
+	
+	
 	devinfo_start_flag =0;
 	if(bbind_num >100)
 		return 0;
@@ -2206,6 +2209,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 		if(task_flag_start && get_timer_status()){
 	    osTimerStop(LedTimerHandle);
 			set_timer_status(0);
+			set_command_type(0xff);
 		}
 		
 		
@@ -2267,12 +2271,12 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 					memcpy(&bdadd_buf[lenth1],&data[count+1],12);
 						
 					memcpy(send_wl_temp[bbind_num],&data[count+1],12);
-						
+					
 						lenth1 +=12;
 					//memcpy(&bdadd_buf[19],"##",2);
 					taskidnum = data[count-1] - '0';
 					send_wl_temp[bbind_num][12] = taskidnum; 
-						
+						printf("copy addr1 %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][12]);
 						
 					if(data[count+14] == '1')
 						memcpy(&apn_buf[totallen],&data[count+14],11);
@@ -2287,10 +2291,11 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 					memcpy(bdadd_buf,"bbind:",lenth1);
 					memcpy(&bdadd_buf[lenth1],&data[count+1],12);
 					memcpy(send_wl_temp[bbind_num],&data[count+1],12);
+				
 					lenth1 +=12;
 					taskidnum = data[count-1] - '0';
 				  send_wl_temp[bbind_num][12] = taskidnum; 
-				
+				printf("copy addr2 %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][12]);
 					//memcpy(&bdadd_buf[19],"##",2);
 					if(data[count+14] == '1')
 						memcpy(&apn_buf[totallen],&data[count+14],11);
@@ -2405,16 +2410,20 @@ bdadd_buf[lenth1] = ',';
 if(task_flag_start &&(!get_timer_status())){
 	 osTimerStart (LedTimerHandle, 5000);
 	set_timer_status(1);
-}
 	
+}
+	if(task_flag_start){
+		set_command_type(0xf1);
+	}
 	memset(backbuf,0x00,40);
 	memcpy(backbuf,"+BBIND:",7);
 	memcpy(&backbuf[7],&data[9],14);	
 	memcpy(&backbuf[21],",OK",3);	
 	memcpy(&backbuf[24],aoa_at_end_tok,AT_END_TOK_LEN);	
-
+ 
 	if(task_flag_start)
 			devinfo_start_flag =1;
+	
 	printf("bbind send_buf %s %d\r\n",bdadd_buf,lenth1);
 	
 }
@@ -2435,9 +2444,7 @@ uint8_t aoa_at_handle_bunbind(uint8_t *data, uint16_t len, uint8_t idx)
 	uint8_t response[52];
 	uint8_t unbind_id_buf[12];
 	
-//	osTimerStop(ReportTimerHandle);	
-	//osStatus ret;
-//	ret=task_ble_mail_put(data, len); //µ÷ÊÔ×¢ÊÍµô£¬
+
 
 	lenth=strlen("AT+BUNBIND=");
 printf("aoa_at_handle_bunbind \r\n");
@@ -2451,10 +2458,10 @@ printf("aoa_at_handle_bunbind \r\n");
 					task_flag_start=0;
 						save_nv_buf[0] = '0';
 		      // memcpy(response,"ubind:",6);
-		if(!get_timer_status()){
-			osTimerStart(LedTimerHandle,5000);
-		  set_timer_status(1);
-		}
+		     if(!get_timer_status()){
+			   osTimerStart(LedTimerHandle,5000);
+		     set_timer_status(1);
+		   }
 				devinfo_flag =0;
 					
 					//memset(zdev_set.bbinddev.bdev_id,0x00,sizeof(zdev_set.bbinddev.bdev_id));
@@ -2483,7 +2490,7 @@ printf("aoa_at_handle_bunbind \r\n");
 			memcpy(response,"subind:",7);
 					totallen +=7;
 		
-					
+						memset(bind_bak_buf,0x00,50);
 							set_command_type(0xff);
 		        send_light_commnd =1;
 					if(data[lenth+1] != ','){
@@ -2494,6 +2501,8 @@ printf("aoa_at_handle_bunbind \r\n");
 							//totallen+=AT_END_TOK_LEN;
 							memset(zdev_set.bbinddev.bdev_id[0],0x00,1300);
 					}else{
+						
+						
 							//response[totallen] = '1';
 							//totallen +=1;
 							//response[totallen] = ',';
@@ -2529,7 +2538,8 @@ printf("aoa_at_handle_bunbind \r\n");
 								
 										if(0 == memcmp(unbind_id_buf,&send_wl_temp[i][0],12)){
 													memset(send_wl_temp[i],0x00,15);
-												bbind_num-=1;
+											if(bbind_num >= 1)
+												   bbind_num-=1;
 										}
 										
 							
@@ -2543,6 +2553,8 @@ printf("aoa_at_handle_bunbind \r\n");
 						ubind_flag = 1;
 						save_dev_addd_nv();
 						
+						copy_addr_group();
+						
 					//if(zdev_set.isMdev ==1)
 					ble_send_response(response, totallen);
 		
@@ -2550,7 +2562,7 @@ printf("aoa_at_handle_bunbind \r\n");
 		case '2':
 			memcpy(response,"subind:",7);
 					totallen +=7;
-		
+							memset(bind_bak_buf,0x00,50);
 							send_light_commnd=1;
 							set_command_type(0xff);
 		        
@@ -2595,7 +2607,8 @@ printf("aoa_at_handle_bunbind \r\n");
 										
 										if(0 == memcmp(unbind_id_buf,&send_wl_temp[i][0],12)){
 													memset(send_wl_temp[i],0x00,15);
-													bbind_num-=1;
+												if(bbind_num >= 1)
+													   bbind_num-=1;
 										}
 							
 							}
@@ -2607,6 +2620,8 @@ printf("aoa_at_handle_bunbind \r\n");
 					
 					ubind_flag = 2;
 					//if(zdev_set.isMdev ==1)
+					copy_addr_group();
+					
 					ble_send_response(response, totallen);
 		
 			break;
@@ -2647,6 +2662,7 @@ printf("aoa_at_handle_bunbind \r\n");
 		memcpy(&ubind_back[len-3],aoa_at_end_tok,AT_END_TOK_LEN);
 		ubind_len =len+1;
 	  aoa_send_response(ubind_back,ubind_len);
+	
 	
 		memcpy(ubind_back_err,"+BUNBIND:",9);
 		memcpy(&ubind_back_err[9],&data[lenth],len-15);

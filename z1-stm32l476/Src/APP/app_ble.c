@@ -229,6 +229,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 		
 
 }
+
 uint8_t report_count =0;
 uint8_t report_once =0;
 void ReportTimerCallback(void)
@@ -236,7 +237,7 @@ void ReportTimerCallback(void)
   uint8_t lost_buf[35];
 	uint8_t report_battery[30];
 	uint8_t report_buf[22] = "5100041111201126000000";
-	printf("report bd info\r\n");
+//	printf("report bd info\r\n");
 	if(report_count >99){
 		  report_once++;
 			report_count =0;
