@@ -456,9 +456,10 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 							if(send_wl_temp[i][13] == ((group_num_back[0] -'0')*10)  + (group_num_back[1] -'0')){
 							   if(memcmp(send_wl_temp[i],addr_buf,12) == 0){
 								   memset(send_wl_temp[i],0x00,15);
-									 bbind_num -=1;
-									 save_nv_buf[69] = bbind_num;
-						set_nvram_save_data(save_nv_buf);
+									 if(bbind_num >= 1)
+										bbind_num -=1;
+									 
+						      set_nvram_save_data(save_nv_buf);
 								 }							
 							}						
 						}else{
@@ -637,11 +638,14 @@ uint8_t ble_open_lock_back(uint8_t *data, uint16_t len, uint8_t at_index)
 			
 			}
 			if(data[i-1] == 'k' && data[i-2] == 'o'){
-					bbind_num -=1;
-				save_nv_buf[69] = bbind_num;
-						set_nvram_save_data(save_nv_buf);
+				//if(bbind_num >= 1)
+										//bbind_num -=1;
+				
+				//save_nv_buf[69] = bbind_num;
+						//set_nvram_save_data(save_nv_buf);
+				printf("subind bbind_num = %d \r\n",bbind_num);
 			}
-			printf("subind bbind_num = %d \r\n",bbind_num);
+			
 }
 
 

@@ -2088,8 +2088,10 @@ void send_ubind_command(void)
 							ubind_command_count =1;
 						set_command_type(0xff);
 						bbind_num= 0;
+						if(get_timer_status()){
 						osTimerStop(LedTimerHandle);
 						set_timer_status(0);
+						}
 					}
 					
 				
@@ -2103,18 +2105,21 @@ uint8_t call_flag=0;
 void LedTimerCallback(void const * argument)
 {
 uint8_t cmd;
-	 cmd = get_command_type();
+	 
+	if(call_flag ==1){
+		if(task_flag_start ==1)
+		   set_command_type(0xf1);	
+	    send_light_commnd =0;
+			call_flag =0;
+	 }
 	 if(send_light_commnd ==1){
 				set_command_type(0xff);
+				call_flag++;
 	 }else if(send_light_commnd ==2){
 					set_command_type(0xff);
 					call_flag++;
 	 }
-	 if(call_flag ==2){
-		 set_command_type(0xf1);
-	    send_light_commnd =0;
-			call_flag =0;
-	 }
+	 cmd = get_command_type();
 	printf("LedTimerCallback cmd = %x \r\n",cmd);
 	switch(cmd){
 		case 0xf1:
@@ -2473,6 +2478,10 @@ printf("aoa_at_handle_bunbind \r\n");
 		case '1':
 			memcpy(response,"subind:",7);
 					totallen +=7;
+		
+					
+							set_command_type(0xff);
+		        send_light_commnd =1;
 					if(data[lenth+1] != ','){
 
 							//response[totallen] = '1';
@@ -2513,11 +2522,7 @@ printf("aoa_at_handle_bunbind \r\n");
 						
 		
 							for(i =0 ;i<100;i++){
-										if(0 == memcmp(unbind_id_buf,&zdev_set.bbinddev.bdev_id[0][i][0],12)){
-													memset(zdev_set.bbinddev.bdev_id[0][i],0x00,13);
-													if(zdev_set.bdevtask1_num>0)
-															zdev_set.bdevtask1_num -=1; 
-										}
+								
 										if(0 == memcmp(unbind_id_buf,&send_wl_temp[i][0],12)){
 													memset(send_wl_temp[i],0x00,15);
 												bbind_num-=1;
@@ -2535,12 +2540,16 @@ printf("aoa_at_handle_bunbind \r\n");
 						save_dev_addd_nv();
 						
 					//if(zdev_set.isMdev ==1)
-					//ble_send_response(response, totallen);
+					ble_send_response(response, totallen);
 		
 			break;
 		case '2':
 			memcpy(response,"subind:",7);
 					totallen +=7;
+		
+							send_light_commnd=1;
+							set_command_type(0xff);
+		        
 					if(data[lenth+1] != ','){
 
 							//response[totallen] = '2';
@@ -2579,11 +2588,7 @@ printf("aoa_at_handle_bunbind \r\n");
 						
 					
 							for(i =0 ;i<100;i++){
-										if(0 == memcmp(unbind_id_buf,&zdev_set.bbinddev.bdev_id[1][i][0],12)){
-													memset(&zdev_set.bbinddev.bdev_id[1][i][0],0x00,13);
-												if(zdev_set.bdevtask2_num >0)
-														zdev_set.bdevtask2_num -=1;
-										}
+										
 										if(0 == memcmp(unbind_id_buf,&send_wl_temp[i][0],12)){
 													memset(send_wl_temp[i],0x00,15);
 													bbind_num-=1;
@@ -2598,7 +2603,7 @@ printf("aoa_at_handle_bunbind \r\n");
 					
 					ubind_flag = 2;
 					//if(zdev_set.isMdev ==1)
-				//	ble_send_response(response, totallen);
+					ble_send_response(response, totallen);
 		
 			break;
 				
@@ -2647,24 +2652,7 @@ printf("aoa_at_handle_bunbind \r\n");
 	//aoa_send_response(ubind_back_err,ubind_len_err);
 	
 	}
-	
-		for(i =0;i<99;i++){
-					if((send_wl_temp[i][0] == 0) &&(send_wl_temp[i][1] ==0) && (send_wl_temp[i][2] == 0)){
-							if((send_wl_temp[i+1][0] != 0) &&(send_wl_temp[i+1][1] !=0) && (send_wl_temp[i+1][2] != 0))
-									memcpy(send_wl_temp[i],send_wl_temp[i+1],15);
-					}else{
-									continue;
-					}
 		
-		
-		}
-		
-		for(i =0;i<100;i++){
-					
-							if((send_wl_temp[i][0] != 0) &&(send_wl_temp[i][1] !=0) && (send_wl_temp[i][2] != 0))
-										sendid_count ++;					
-	}
-	
 }
 
 
