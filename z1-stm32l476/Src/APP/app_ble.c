@@ -105,7 +105,7 @@ typedef enum{
 
 static const ble_at_symbol ble_uart_at_table[BLE_SUPPORT_UART_AT_NUM] = {
 	{aoa_at_handle_bdev_info, (uint8_t *)"devinfo:"},
-	{ble_at_handle,(uint8_t *)"versionget:"},
+	{ble_versionget_handle,(uint8_t *)"versionget:"},
 	{ble_at_handle,(uint8_t *)"+BDISTANCE:"},
 	{ble_set_bleaddr,(uint8_t *)"writedev:"},
 	{ble_at_handle,(uint8_t *)"bbind:"},	
@@ -146,13 +146,20 @@ uint8_t ble_set_bleaddr(uint8_t *data, uint16_t len, uint8_t at_index)
 			bleisok =0;
 }
 
-uint8_t version_info[10]="2020";
+uint8_t version_info[10]="20";
+extern uint8_t zcall_response[64];
+extern uint8_t zcall_lenth;
 uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index)
 {
 		uint8_t lenth =0;
 	  lenth = strlen("versionget:");
-	 	 memcpy(version_info,&data[lenth],6);
-
+	 	 memcpy(&version_info[2],&data[lenth],6);
+	  
+		 memcpy(&zcall_response[zcall_lenth],version_info,8);
+	   zcall_lenth +=8;
+		memcpy(&zcall_response[zcall_lenth],aoa_at_end_tok,4);
+	   zcall_lenth +=4;
+	  aoa_send_response(zcall_response, zcall_lenth);
 }
 uint8_t bdinfo_count =0;
 extern uint8_t send_wl_temp[100][15];
@@ -351,9 +358,7 @@ void ble_zid_data(uint8_t *data,uint8_t len)
 		
 	}
 
-		set_ble_power_off();
-		osDelay(100);
-			set_ble_power();
+		
 }
 extern uint8_t backup_buf[50];
 extern uint8_t get_task_bdev_id(uint8_t *data , uint16_t len ,uint8_t idx);
@@ -416,7 +421,7 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 				  printf("tasknum %s \r\n",tasknum);
 			 }else if(count1 ==4){
 			 
-			// memcpy(bind_dev_version,&data[count -6],6);
+			memcpy(bind_dev_version,&data[count -6],6);
 				  printf("version_bd %s \r\n",version_bd);
 			 }
 			 	}

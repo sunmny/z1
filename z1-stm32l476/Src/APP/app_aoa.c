@@ -1166,11 +1166,12 @@ void send_getid_zdev(uint8_t *buf,uint8_t len)
 extern uint8_t bleisok ;
 extern uint8_t gsn_buf[12];
 extern uint8_t zdev_isbind;
-
+uint8_t zcall_response[64];
+uint8_t zcall_lenth;
 uint8_t aoa_at_handle_zcall(uint8_t *data, uint16_t len, uint8_t idx)
 {
 	uint16_t totallen;
-	uint8_t response[64];
+	
 	uint8_t buf[12];
 		
 	memcpy(buf,"versionget##",12);
@@ -1179,29 +1180,31 @@ uint8_t aoa_at_handle_zcall(uint8_t *data, uint16_t len, uint8_t idx)
 	
 
 	if(bleisok == 0){
-			memcpy(response,"+ZCALL:ERROR",12);
-			memcpy(&response[12],"##",4);
-		aoa_send_response(response, 16);
+			memcpy(zcall_response,"+ZCALL:ERROR",12);
+			memcpy(&zcall_response[12],"##",4);
+		aoa_send_response(zcall_response, 16);
 	}else{
 			
 	
 			totallen = strlen("+ZCALL:");
 		
-			memcpy(response,"+ZCALL:",totallen);
-			memcpy(&response[totallen],gsn_buf,12);			
+			memcpy(zcall_response,"+ZCALL:",totallen);
+			memcpy(&zcall_response[totallen],gsn_buf,12);			
 			memcpy(zdev_set.mydev_id,gsn_buf,12);
 			totallen +=12;
-			memcpy(&response[totallen],",OK",3);
+			memcpy(&zcall_response[totallen],",OK",3);
 			totallen +=3;
+		   
+		  zcall_lenth = totallen;
 			//memcpy(&buf[lenth1],"20",2);
 			//lenth1 +=2;
-		//	memcpy(&version_info[2],&data[lenth+13],6);
-			//lenth1 +=6;
-			memcpy(&response[totallen],"##",2);
-			totallen +=2;
-		printf("zcall buf is %s \r\n",buf);
-		zdev_isbind = 1;
-		aoa_send_response(response, totallen);
+			//memcpy(&zcall_response[totallen],version_info,8);
+			//totallen +=8;
+			//memcpy(&response[totallen],"##",2);
+			//totallen +=2;
+	   	printf("zcall buf is %s \r\n",buf);
+		   zdev_isbind = 1;
+		//aoa_send_response(response, totallen);
 		
 	}
 
@@ -2446,7 +2449,7 @@ uint8_t aoa_at_handle_bunbind(uint8_t *data, uint16_t len, uint8_t idx)
 	
 
 
-	lenth=strlen("AT+BUNBIND=");
+	lenth=strlen("AT+	BUNBIND=");
 printf("aoa_at_handle_bunbind \r\n");
 	#if 1
 	switch(data[lenth]){
