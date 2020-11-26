@@ -194,7 +194,7 @@ uint8_t set_val1_to_report(void)
 		else if(bat1_val2 <0x2c)
 					zdev_set.zbat_soc1 = 0;
 		
-		printf("zdev_set.zbat_soc1 = %d bat1_val2 = %x\r\n",zdev_set.zbat_soc1,bat1_val2);
+		//printf("zdev_set.zbat_soc1 = %d bat1_val2 = %x\r\n",zdev_set.zbat_soc1,bat1_val2);
 	
 	}else{
 		zdev_read_battery1_soc();
@@ -209,7 +209,7 @@ uint8_t set_val1_to_report(void)
 					zdev_set.zbat_soc1 =1;
 		else if(bat_bd_soc <= 5)
 					zdev_set.zbat_soc1 =0;
-		printf("zdev_set.zbat_soc1  = %d bat_bd_soc = %d\r\n",zdev_set.zbat_soc1,bat_bd_soc);
+//		printf("zdev_set.zbat_soc1  = %d bat_bd_soc = %d\r\n",zdev_set.zbat_soc1,bat_bd_soc);
 		return 0;
 	}
 }

@@ -382,14 +382,14 @@ uint8_t aoa_at_handle_bbeatnow(void)
 		len+=3;
 		
 		
-		memcpy(&report_stat[len],"20201116",8);
+		memcpy(&report_stat[len],"20201126",8);
 		len = len+8;
 		
 		memcpy(&report_stat[len],aoa_at_end_tok,4);
 			len+=AT_END_TOK_LEN;
 
 	 aoa_send_response(report_stat,len);
-		printf("bbreport : %s \r\n",report_stat);
+//		printf("bbreport : %s \r\n",report_stat);
 		
 		//task_aoauart_mail_put(report_stat,len);
 }
@@ -553,9 +553,9 @@ uint8_t aoa_at_handle_bbeatnow_bdev(uint8_t *report_id,uint8_t *report_info)
 		
 		memcpy(&report_stat[len],aoa_at_end_tok,4);
 			len+=AT_END_TOK_LEN;
-		printf("report_stat:%s  %d \r\n",report_stat,len);
+		//printf("report_stat:%s  %d \r\n",report_stat,len);
 	 aoa_send_response(report_stat,len);
-		printf("aoa bdev send -------------------\r\n");
+	//	printf("aoa bdev send -------------------\r\n");
 		
 		//task_aoauart_mail_put(report_stat,len);
 }
@@ -603,15 +603,15 @@ void aoa_at_handle_bpalert(void)
 			memcpy(&report_stat[len],aoa_at_end_tok,4);
 			len+=AT_END_TOK_LEN;
 	if(zdev_set.zbattery ==1){
-		printf("zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
+	//	printf("zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
 			if(zdev_set.zbat_soc1<=zdev_set.report_bat_threshold || zdev_set.zbat_soc<=zdev_set.report_bat_threshold ){
-				printf("IN zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
+			//	printf("IN zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
 	   aoa_send_response(report_stat,len);
 		} 
 	}else{
-	printf("zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
+	//printf("zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
 			if( zdev_set.zbat_soc<=zdev_set.report_bat_threshold ){
-			printf("IN zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
+		//	printf("IN zdev_set.report_bat_threshold = %d  soc :%d  soc1:%d ",zdev_set.report_bat_threshold,zdev_set.zbat_soc,zdev_set.zbat_soc1);
 	   aoa_send_response(report_stat,len);
 		} 
 	
@@ -2185,7 +2185,7 @@ uint8_t zdev_bind_flag =0;
 uint8_t new_dev = 0;
 
 extern uint8_t send_wl_temp[100][15];
-
+extern uint8_t devinfo_start_flag;
 // bbind=1,2,2,223456,000000000000,109988998889##
 uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 {
@@ -2199,7 +2199,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
   uint8_t group_num = 0;
 	
 	
-	
+	devinfo_start_flag =0;
 	if(bbind_num >100)
 		return 0;
 	
@@ -2227,7 +2227,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 	
 	}
 
-	
+	printf("new_dev = %d \r\n",new_dev );
 	
 	
 	
@@ -2303,8 +2303,9 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 		count++;
 	}
 	
-
-	send_wl_temp[bbind_num][13] = group_num; 
+  if(!new_dev)
+		send_wl_temp[bbind_num][13] = group_num; 
+	
 	printf("mac group_nu %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][13]);
 	
 	if(new_dev){
@@ -2410,7 +2411,10 @@ if(task_flag_start &&(!get_timer_status())){
 	memcpy(backbuf,"+BBIND:",7);
 	memcpy(&backbuf[7],&data[9],14);	
 	memcpy(&backbuf[21],",OK",3);	
-	memcpy(&backbuf[24],aoa_at_end_tok,AT_END_TOK_LEN);		
+	memcpy(&backbuf[24],aoa_at_end_tok,AT_END_TOK_LEN);	
+
+	if(task_flag_start)
+			devinfo_start_flag =1;
 	printf("bbind send_buf %s %d\r\n",bdadd_buf,lenth1);
 	
 }

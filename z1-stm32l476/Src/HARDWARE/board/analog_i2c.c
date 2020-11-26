@@ -774,7 +774,7 @@ uint8_t analog_i2c_read_data(uint8_t slave_addr,uint8_t *read_data, uint16_t sta
 
         analog_i2c_error_handle();
 
-        printf("first read error\r\n");
+      //  printf("first read error\r\n");
 			return 1;
 
     }

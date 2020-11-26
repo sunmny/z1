@@ -219,7 +219,7 @@ void mytestTask1(void const * argument)
 		uint8_t i =0;
 
 	while(1){
-		printf("mytestTask1---1\r\n");
+	//	printf("mytestTask1---1\r\n");
 		
 		osDelay(500);
 		
@@ -336,7 +336,7 @@ void mytestTask1(void const * argument)
 		
 		}
 		
-	printf("ft_dev.soskey_flags = %d \r\n",ft_dev.soskey_flags);
+//	printf("ft_dev.soskey_flags = %d \r\n",ft_dev.soskey_flags);
 	if(open_airmode ==1){
 	
 		send_count_flag7++;

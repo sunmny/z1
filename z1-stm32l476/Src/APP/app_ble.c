@@ -156,7 +156,7 @@ uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index)
 }
 uint8_t bdinfo_count =0;
 extern uint8_t send_wl_temp[100][15];
-uint8_t bind_dev_version[6]="201116";
+uint8_t bind_dev_version[6]="201126";
 
 uint8_t  copy_addr_group(void)
 {
@@ -168,7 +168,7 @@ uint8_t  copy_addr_group(void)
 				memcpy(bd_info[count].addr,send_wl_temp[i],12);
 				memcpy(bd_info[count].version_bd,bind_dev_version,6);
 				bd_info[count].num_group = send_wl_temp[i][13];
-			 printf("bd_info[count].addr %s groupnum %d \r\n",bd_info[count].addr,bd_info[count].num_group);
+			 //printf("bd_info[count].addr %s groupnum %d \r\n",bd_info[count].addr,bd_info[count].num_group);
 				count ++;
 		 }	
 		
@@ -187,7 +187,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 	    uint16_t i =0,j=0;
 			lenth = strlen("devinfo:");
 	
-		printf("sunmny data %d %d %s \r\n",len, (len%31),data );
+		//printf("sunmny data %d %d %s \r\n",len, (len%31),data );
 	  		if(!devinfo_flag){
 //				osTimerStart(ReportTimerHandle, 200);
 				devinfo_flag =1;
@@ -203,7 +203,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 					if(data[i] == 'd'){
 						if(memcmp(&data[i],"devinfo:",8) ==0){
 								group_num = (data[i+lenth+13] - '0')*10 + (data[i+lenth+14] - '0');
-							printf("sunmny name %d  %d \r\n",i,group_num);
+							//printf("sunmny name %d  %d \r\n",i,group_num);
 								for(j =0;j<100;j++){
 									if(bd_info[j].num_group == group_num){
 										
@@ -235,13 +235,13 @@ void ReportTimerCallback(void)
 {
   uint8_t lost_buf[35];
 	uint8_t report_battery[30];
-	uint8_t report_buf[22] = "5100041111201116000000";
+	uint8_t report_buf[22] = "5100041111201126000000";
 	printf("report bd info\r\n");
 	if(report_count >99){
 		  report_once++;
 			report_count =0;
 	}else{
-		printf("sunmny  bd_info[%d].dis_status %d  %d  %d %d \r\n",report_count,bd_info[report_count].dis_status,bd_info[report_count].bat_soc,bd_info[report_count].lost_flag,report_once);
+	//	printf("sunmny  bd_info[%d].dis_status %d  %d  %d %d \r\n",report_count,bd_info[report_count].dis_status,bd_info[report_count].bat_soc,bd_info[report_count].lost_flag,report_once);
 			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==1)&&(bd_info[report_count].dis_status ==0)){
 			
 					if(bd_info[report_count].bat_soc ==0)
@@ -394,7 +394,7 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 				}
 		}
 	  count =0;
-		printf("sunmny  is %s \r\n",buf);
+		//printf("sunmny  is %s \r\n",buf);
 		while(data[count] != '#' ){
 			if(data[count] == ','){
 				count1 ++;
