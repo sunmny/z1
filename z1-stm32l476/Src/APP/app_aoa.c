@@ -16,7 +16,7 @@
 #define SUPPORT_MAIL_NUM 1
 
 #define BDEVICE_MAX_NUM 100
-
+extern uint8_t save_nv_buf[70];
 
 
 #define BDEVICE_GROUP_NUM   10
@@ -116,7 +116,7 @@ uint8_t aoa_send_response(uint8_t *data, uint16_t len);
 uint8_t get_zdevice_battery(void);
 uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_close_bdev_report(uint8_t *data, uint16_t len, uint8_t idx);
-
+void save_dev_addd_nv(void);
 
 
 uint8_t task_flag_start =0;
@@ -171,9 +171,72 @@ static const aoa_at_handle_symbol aoa_at_table[SUPPORT_AT_NUM] = {
 /***************at only for test end**********************/
 
 };
+uint8_t save_data_type=0;
+
+uint8_t  get_save_data_type(void)
+{
+
+	return save_data_type;
+}
+
+uint8_t set_save_data_type(uint8_t data_type)
+{
+
+	 save_data_type = data_type;
+	
+}
+extern TaskHandle_t devsavetask;
+void send_to_save(void)
+{
+
+	 xTaskNotifyGive( devsavetask );
+
+}
+
+void save_dev_addr(void)
+{
+		set_save_data_type(0xf0);
+		send_to_save();
+}
+
+void save_dev_info(void)
+{
+		set_save_data_type(0xe0);
+		send_to_save();
+}
+
+void save_dev_info_flash(void)
+{
+
+   set_nvram_save_data(save_nv_buf);
+}
+void devinfo_save_task(void const * argument)
+{
+	
+	
+	uint8_t cmd = 0xff;
+	
+		while(1){
+				ulTaskNotifyTake( pdTRUE, portMAX_DELAY);
+				cmd = get_save_data_type();
+			switch(cmd){
+				case 0xf0:
+				    save_dev_addd_nv();
+					break;
+				case 0xe0:
+					  save_dev_info_flash();
+					break;
+				
+				default:
+					break;
+				
+				  }
+		
+		}
 
 
 
+}
 
 
 void aoa_at_handle_bsossend(void)
@@ -1603,21 +1666,21 @@ extern uint8_t send_wl_temp[100][15];
 void clear_dev_nv(void)
 {
 	memset(addr_nv_buf,0x00,1500);
-//	set_nvram_id_data(addr_nv_buf);
+	set_nvram_id_data(addr_nv_buf);
 	
 	memset(addr_nv_buf,0x00,1500);
-	//set_nvram_id_data(addr_nv_buf);
+	set_nvram_id_data(addr_nv_buf);
 }
 void save_dev_addd_nv(void)
 {
-	//		uint8_t i,j;
-	//	memset(addr_nv_buf,0x00,1500);
-	//for(i = 0;i<100;i++)
-	//{
-			//memcpy(&addr_nv_buf[i*15],send_wl_temp[i],15);
-	//}
+			uint8_t i,j;
+		memset(addr_nv_buf,0x00,1500);
+	for(i = 0;i<100;i++)
+	{
+			memcpy(&addr_nv_buf[i*15],send_wl_temp[i],15);
+	}
 		
-	//set_nvram_id_data(addr_nv_buf);
+	set_nvram_id_data(addr_nv_buf);
 
 }
 uint8_t open_airmode = 0;
@@ -1852,7 +1915,7 @@ uint8_t get_task_bdev_id(uint8_t *data , uint16_t len ,uint8_t idx)
 	}	
 	
 
-extern uint8_t save_nv_buf[70];
+
 extern void send_wlist_to_ble(void);
 	
 uint8_t command_type = 0xff;
@@ -1907,7 +1970,7 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
 				 osTimerStart(LedTimerHandle, 5000);
 					set_timer_status(1);
 	}
-
+	save_dev_addr();
 	
 }
 uint8_t task_send_count =1;

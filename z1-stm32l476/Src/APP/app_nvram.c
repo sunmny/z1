@@ -26,7 +26,7 @@ flash_status_t get_nvram_save_data(uint8_t *sn)
 flash_status_t set_nvram_save_data(uint8_t *sn)
 {
 	
-	return 0;
+	
 	flash_status_t status;
 	uint8_t userNvram[USER_NVRAM_SIZE];
 	uint32_t offset;

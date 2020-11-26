@@ -54,7 +54,7 @@ extern void mytestTask(void const * argument);
 extern void mytestTask1(void const * argument);
 
 extern void devinfo_report_task(void const * argument);
-
+extern void devinfo_save_task(void const * argument);
 
 uint8_t save_nv_buf[70]; /* 10 begin rd num rd num2****/
 extern uint8_t addr_nv_buf[1500];
@@ -66,6 +66,7 @@ uint8_t gsn_buf[12] ={0};
  TaskHandle_t bletask = NULL;
  TaskHandle_t aoatask = NULL;
  TaskHandle_t devreporttask = NULL;
+ TaskHandle_t devsavetask = NULL;
 uint8_t send_mac_buf[20];
 extern void LedTimerCallback(void const * argument);
 //extern void ReportTimerCallback(void const * argument);
@@ -127,6 +128,8 @@ void task_init(void)
 	xTaskCreate( BleTask, "Task3",512, NULL, tskIDLE_PRIORITY, &bletask );
 
 	xTaskCreate( devinfo_report_task, "Task5",512, NULL, tskIDLE_PRIORITY, &devreporttask );
+	
+	xTaskCreate( devinfo_save_task, "Task6",256, NULL, tskIDLE_PRIORITY, &devsavetask );
   /* definition and creation of GPSQueue */
   osMessageQDef(GpsQueue, GpsQueueLen, uint16_t);
   GpsQueueHandle = osMessageCreate(osMessageQ(GpsQueue), NULL);
