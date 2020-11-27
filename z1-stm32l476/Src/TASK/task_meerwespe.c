@@ -207,7 +207,7 @@ void task_init(void)
 			copy_addr_group();
 			group_num_data = save_nv_buf[69];
 			if(!get_timer_status()){
-			   osTimerStart(LedTimerHandle,5000);
+			   osTimerStart(LedTimerHandle,3500);
 			   set_timer_status(1);
 			}
 			//	aoa_at_handle_taskbegin("taskbegin0",10,1);

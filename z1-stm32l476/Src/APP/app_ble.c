@@ -147,19 +147,14 @@ uint8_t ble_set_bleaddr(uint8_t *data, uint16_t len, uint8_t at_index)
 }
 
 uint8_t version_info[10]="20";
-extern uint8_t zcall_response[64];
-extern uint8_t zcall_lenth;
+
 uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index)
 {
 		uint8_t lenth =0;
 	  lenth = strlen("versionget:");
 	 	 memcpy(&version_info[2],&data[lenth],6);
 	  
-		 memcpy(&zcall_response[zcall_lenth],version_info,8);
-	   zcall_lenth +=8;
-		memcpy(&zcall_response[zcall_lenth],aoa_at_end_tok,4);
-	   zcall_lenth +=4;
-	  aoa_send_response(zcall_response, zcall_lenth);
+		
 }
 uint8_t bdinfo_count =0;
 extern uint8_t send_wl_temp[100][15];
@@ -168,6 +163,7 @@ uint8_t bind_dev_version[6]="201126";
 uint8_t  copy_addr_group(void)
 {
    uint8_t i =0,count=0;
+		memset(bd_info,0x00,sizeof(bd_info));
 	for(i = 0;i<100;i++){
 		 if(send_wl_temp[i][0] !='1'){
 					continue;
@@ -175,7 +171,7 @@ uint8_t  copy_addr_group(void)
 				memcpy(bd_info[count].addr,send_wl_temp[i],12);
 				memcpy(bd_info[count].version_bd,bind_dev_version,6);
 				bd_info[count].num_group = send_wl_temp[i][13];
-			 //printf("bd_info[count].addr %s groupnum %d \r\n",bd_info[count].addr,bd_info[count].num_group);
+			  printf("bd_info[%d].addr %s \r\n",count,bd_info[count].addr);
 				count ++;
 		 }	
 		
@@ -187,6 +183,7 @@ uint8_t  copy_addr_group(void)
 }
 uint8_t devinfo_flag =0;
 uint8_t devinfo_start_flag =0;
+extern uint8_t task_flag_start;
 //extern osTimerId ReportTimerHandle;
 uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 {
@@ -195,6 +192,10 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 			lenth = strlen("devinfo:");
 	
 		//printf("sunmny data %d %d %s \r\n",len, (len%31),data );
+	     if(!task_flag_start){
+								memset(bd_info,0x00,sizeof(bd_info));
+							   return 0;
+			 }
 	  		if(!devinfo_flag){
 //				osTimerStart(ReportTimerHandle, 200);
 				devinfo_flag =1;
@@ -354,7 +355,7 @@ void ble_zid_data(uint8_t *data,uint8_t len)
 			lenth1 +=4;
 		printf("zcall buf is %s \r\n",buf);
 		zdev_isbind = 1;
-		aoa_send_response(buf, lenth1);
+		//aoa_send_response(buf, lenth1);
 		
 	}
 
@@ -465,7 +466,7 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 									 if(bbind_num >= 1)
 										bbind_num -=1;
 									 
-						      set_nvram_save_data(save_nv_buf);
+						     // set_nvram_save_data(save_nv_buf);
 								 }							
 							}						
 						}else{
