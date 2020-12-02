@@ -50,6 +50,7 @@ osTimerId LedTimerHandle;
 //osTimerId ReportTimerHandle;
 
 
+
 extern void mytestTask(void const * argument);
 extern void mytestTask1(void const * argument);
 
@@ -71,6 +72,8 @@ uint8_t send_mac_buf[20];
 extern void LedTimerCallback(void const * argument);
 //extern void ReportTimerCallback(void const * argument);
 extern uint8_t group_num_data;
+extern uint8_t  bbind_num;
+extern uint8_t task_flag_start;
 void task_init(void)
 {
 
@@ -129,7 +132,7 @@ void task_init(void)
 
 	xTaskCreate( devinfo_report_task, "Task5",512, NULL, tskIDLE_PRIORITY, &devreporttask );
 	
-	xTaskCreate( devinfo_save_task, "Task6",256, NULL, tskIDLE_PRIORITY, &devsavetask );
+	//xTaskCreate( devinfo_save_task, "Task6",512, NULL, tskIDLE_PRIORITY+3, &devsavetask );
   /* definition and creation of GPSQueue */
   osMessageQDef(GpsQueue, GpsQueueLen, uint16_t);
   GpsQueueHandle = osMessageCreate(osMessageQ(GpsQueue), NULL);
@@ -164,15 +167,14 @@ void task_init(void)
 		memcpy(zdev_set.mydev_id,gsn_buf,12);
 		printf("gsn_buf = %s \r\n",gsn_buf);
 		
-		memset(&zdev_set.bbinddev.bdev_id[0][0][0],0x00,1300);
-		memset(&zdev_set.bbinddev.bdev_id[1][0][0],0x00,1300);
+
 		
 		memcpy(send_mac_buf,"writedev:",9);
 		memcpy(&send_mac_buf[9],gsn_buf,12);
 		memcpy(&send_mac_buf[21],"##",2);
 		ble_send_response(send_mac_buf,23);
 		
-	#if 0
+	#if 1
 		memset(save_nv_buf,0x00,70);
 				
 		get_nvram_save_data(save_nv_buf);
@@ -183,9 +185,9 @@ void task_init(void)
 			
 			zdev_set.isMdev = save_nv_buf[1] -'0';
 			
-			memcpy(zdev_set.rn_num,&save_nv_buf[10],6);
-			memcpy(zdev_set.rd_num,&save_nv_buf[16],6);
-			zdev_set.report_mesage_id = save_nv_buf[22] - '0'; 
+			//memcpy(zdev_set.rn_num,&save_nv_buf[10],6);
+			//memcpy(zdev_set.rd_num,&save_nv_buf[16],6);
+			//zdev_set.report_mesage_id = save_nv_buf[22] - '0'; 
 			set_ble_red_light(0);
 			printf("zdev_set.isMdev = %d \r\n",zdev_set.isMdev);
 			contiue_task = 1;
@@ -193,26 +195,20 @@ void task_init(void)
 			for(i = 0;i<100;i++)
 			{
 				memcpy(&send_wl_temp[i][0],&addr_nv_buf[i*15],15);
-				if(addr_nv_buf[(i*12)+12] == '1'){
-					memcpy(&zdev_set.bbinddev.bdev_id[0][i][0],&addr_nv_buf[i*15],13);
-					printf("nv id = %s \r\n",zdev_set.bbinddev.bdev_id[0][i]);
-					zdev_set.bdevtask1_num =zdev_set.bdevtask1_num+1;
-//					printf("zdev_set.bdevtask1_num = %d \r\n",zdev_set.bdevtask1_num );
-				}else if(addr_nv_buf[(i*12)+12] == '2'){
-					memcpy(&zdev_set.bbinddev.bdev_id[1][i][0],&addr_nv_buf[i*15],13);
-					printf("nv id = %s \r\n",zdev_set.bbinddev.bdev_id[0][i]);
-					zdev_set.bdevtask2_num =zdev_set.bdevtask2_num+1;
-				}
+				printf("send_wl_temp %s \r\n",send_wl_temp[i]);
 			}
+			task_flag_start=1;
 			copy_addr_group();
-			group_num_data = save_nv_buf[69];
+			bbind_num  = save_nv_buf[2];
 			if(!get_timer_status()){
 			   osTimerStart(LedTimerHandle,3500);
 			   set_timer_status(1);
+				
 			}
+			set_command_type(0xf1);
 			//	aoa_at_handle_taskbegin("taskbegin0",10,1);
 		}	else{
-		memset(save_nv_buf,0x00,70);
+		    memset(save_nv_buf,0x00,70);
 		}
 		printf("get nv flag ok\r\n");
 		#endif

@@ -217,6 +217,11 @@ void devinfo_save_task(void const * argument)
 	uint8_t cmd = 0xff;
 	
 		while(1){
+			printf("save task info start  \r\n");
+			osDelay(5000);
+			 	save_dev_addd_nv();
+			printf("save task info ok  \r\n");
+			#if 0
 				ulTaskNotifyTake( pdTRUE, portMAX_DELAY);
 			
 				cmd = get_save_data_type();
@@ -237,7 +242,7 @@ void devinfo_save_task(void const * argument)
 					break;
 				
 				  }
-		
+		#endif
 		}
 
 
@@ -1209,7 +1214,7 @@ uint8_t aoa_at_handle_zbind(uint8_t *data, uint16_t len, uint8_t idx)
 	uint8_t ret;
 	uint8_t response[64];
 	
-	zdev_set.zdev_is_set=0;
+	
 		zdev_set.zdev_num = 1;//get_zdevice_num(data,len,idx);
 	
 	//get_zdev_id(data,len,idx);
@@ -1244,7 +1249,7 @@ uint8_t aoa_at_handle_zcall(uint8_t *data, uint16_t len, uint8_t idx)
 	
 	ble_send_response(buf,12);
 	
-
+  printf("bleisok = %d \r\n",bleisok);
 	if(bleisok == 0){
 			memcpy(zcall_response,"+ZCALL:ERROR",12);
 			memcpy(&zcall_response[12],"##",4);
@@ -1652,20 +1657,24 @@ void clear_dev_nv(void)
 	memset(addr_nv_buf,0x00,1500);
 	set_nvram_id_data(addr_nv_buf);
 	
-	memset(addr_nv_buf,0x00,1500);
-	set_nvram_id_data(addr_nv_buf);
+	//memset(addr_nv_buf,0x00,1500);
+	//set_nvram_id_data(addr_nv_buf);
 }
 void save_dev_addd_nv(void)
 {
 			uint8_t i,j;
+			uint8_t ret;
 		memset(addr_nv_buf,0x00,1500);
 	for(i = 0;i<100;i++)
 	{
 			memcpy(&addr_nv_buf[i*15],send_wl_temp[i],15);
 	}
-		
-	//set_nvram_id_data(addr_nv_buf);
-
+	
+	taskENTER_CRITICAL();
+	ret = set_nvram_id_data(addr_nv_buf);
+	if(ret)
+		 set_nvram_id_data(addr_nv_buf);
+  taskEXIT_CRITICAL();
 }
 uint8_t open_airmode = 0;
 uint8_t blebuf[50];
@@ -1685,15 +1694,15 @@ uint8_t aoa_at_handle_airplanemode(uint8_t *data, uint16_t len, uint8_t idx)//аш
 	//osTimerStop(LedTimerHandle);
 	
 	
-	  save_nv_buf[2]=zdev_set.report_dis+'0';
-	  save_nv_buf[3]=zdev_set.report_bat_threshold+'0';
+	 // save_nv_buf[2]=zdev_set.report_dis+'0';
+	 // save_nv_buf[3]=zdev_set.report_bat_threshold+'0';
 	
 		if(zdev_set.isMdev ==1){
 			save_nv_buf[1] = '1';
 		}else{
 			save_nv_buf[1] = '0';
 		}
-				
+				save_nv_buf[0] = '1';
 		//set_nvram_save_data(save_nv_buf);
 		
 	memcpy(buf,"+AIRPLANEMODE:ON,OK##\r\n",25);
@@ -2014,7 +2023,7 @@ void send_bbind_command(void)
 		   ble_send_response(commnd_buf, totallen1);	
 }
 uint8_t air_command_send_count =1;
-
+extern uint8_t save_flas;
 void send_airmode_command(void)
 {
 	uint8_t buf[30],flag =0;
@@ -2069,6 +2078,7 @@ void send_airmode_command(void)
 		}else{
 			air_command_send_count =1;
 			set_command_type(0xff);
+			save_flas =1;
 	}
 			
 	
@@ -2077,7 +2087,7 @@ void send_airmode_command(void)
 
 }
 uint8_t ubind_command_count =1;
-
+extern uint8_t ubind_all_flag;
 void send_ubind_command(void)
 {
 			uint8_t response[50];
@@ -2132,6 +2142,7 @@ void send_ubind_command(void)
 						if(get_timer_status()){
 						osTimerStop(LedTimerHandle);
 						set_timer_status(0);
+						ubind_all_flag =1;
 						}
 					}
 					

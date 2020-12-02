@@ -492,7 +492,7 @@ uint8_t ret;
 
 	
 	
-	#if 1
+	#if 0
 	State = HAL_SD_GetCardState(&hsd1);
 
 	if(State == HAL_SD_CARD_TRANSFER)

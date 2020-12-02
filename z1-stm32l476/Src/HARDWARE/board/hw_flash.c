@@ -51,8 +51,10 @@ flash_status_t Flash_If_Erase(uint32_t Add)
 
    /* Get the number of sector to erase from 1st sector*/
   eraseinitstruct.Banks = GetBank(Add);
+	printf(" eraseinitstruct.Banks = %d \r\n", eraseinitstruct.Banks);
   eraseinitstruct.TypeErase = FLASH_TYPEERASE_PAGES;
   eraseinitstruct.Page = GetPage(Add);
+	printf(" eraseinitstruct.Page = %d \r\n", eraseinitstruct.Page);
   eraseinitstruct.NbPages = 1;
   status = HAL_FLASHEx_Erase(&eraseinitstruct, &PageError);
 

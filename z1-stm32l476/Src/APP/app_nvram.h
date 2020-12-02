@@ -5,12 +5,6 @@
 #include "stm32l4xx_hal.h"
 #include "hw_flash.h"
 
-#define USER_NVRAM_DEVID_START_ADDR 0x807E000
-#define USER_NVRAM_DEVID_SIZE 0x800  /*2K, one page*/
-
-#define NV_DEVID_DEFAULT_MSG_ADDR 0x807E000 
-#define NV_DEVID_DEFAULT_MSG_SIZE_BYTE 1500
-
 #define USER_NVRAM_START_ADDR 0x807F000
 #define USER_NVRAM_SIZE 0x800  /*2K, one page*/
 
@@ -38,7 +32,8 @@
 #define NV_SN_DEFAULT_MSG_ADDR 0x807F109 /*need to check the length*/
 #define NV_SN_DEFAULT_MSG_SIZE_BYTE 13
 
-
+#define NV_ID_DEFAULT_MSG_ADDR 0x807F130 /*need to check the length*/
+#define NV_ID_DEFAULT_MSG_SIZE_BYTE 1300
 typedef struct{
 	uint8_t low_battery;
 	uint32_t report_period;

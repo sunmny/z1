@@ -212,19 +212,34 @@ extern uint8_t  wlist_continue_send_flag;
 uint8_t  wlist_continue_send_flag_count=0;
 uint8_t  wlist_continue_send_flag_count1=0;
 extern uint8_t zdev_bind_flag;
-
+uint8_t save_flas =0;
+uint8_t ubind_all_flag =0;
+extern uint8_t save_nv_buf[70];
+extern  uint8_t bbind_num;
 //uint8_t temp_buf_11[38]=" bbind:132009220010,01,01,201025,ok##";
 void mytestTask1(void const * argument)
 {
 		uint8_t i =0;
 
 	while(1){
-	//	printf("mytestTask1---1\r\n");
+		printf("mytestTask1---1\r\n");
 		
 		osDelay(500);
+		if(save_flas){
+			save_dev_addd_nv();
+			save_nv_buf[2] = bbind_num;
+			set_nvram_save_data(save_nv_buf);
+			save_flas =0;
+		}
 		
+		if(ubind_all_flag){
+		  ubind_all_flag=0;
+			clear_dev_nv();
+			memset(save_nv_buf,0x00,70);
+			set_nvram_save_data(save_nv_buf);
+		}
 	//ble_bind_back(temp_buf_11,38);
-	
+	#if 1
 		if(charger_light==1){
 		
 			send_count_flag9 ++;
@@ -461,6 +476,7 @@ void mytestTask1(void const * argument)
 			send_count_flag10 ++;
 	if(send_count_flag10 >100)
 			send_count_flag10 = 10;
+	#endif
 	}
 	
 
