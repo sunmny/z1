@@ -343,7 +343,7 @@ void ble_zid_data(uint8_t *data,uint8_t len)
 		
 			memcpy(buf,"+ZCALL:",lenth1);
 			memcpy(&buf[lenth1],gsn_buf,DEVICE_ID_LEN);			
-			memcpy(zdev_set.mydev_id,gsn_buf,DEVICE_ID_LEN);
+		//	memcpy(zdev_set.mydev_id,gsn_buf,DEVICE_ID_LEN);
 			lenth1 +=12;
 			memcpy(&buf[lenth1],",OK",3);
 			lenth1 +=3;
@@ -386,7 +386,7 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 	lenth2 = strlen("AT+BBIND=");
 	memcpy(buf,"+BBIND:",7);
 	
-	hw_bd2_open();
+	//hw_bd2_open();
 		printf("bind num = %d bind backup_buf is %s \r\n",bbind_num,buf);
 	if(0 == memcmp(bind_bak_buf,data,len)){
 				return ;
@@ -405,9 +405,7 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 		while(data[count] != '#' ){
 			if(data[count] == ','){
 				count1 ++;
-				
-		
-			
+							
 			printf("count1 is %d \r\n",count1 );
 			 if(count1 ==1){
 				 printf("count is %d \r\n",count );
@@ -418,11 +416,11 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 			  printf("group_num %s \r\n",group_num_back);
 			 }else if(count1 ==3){
 			 
-			 memcpy(tasknum,&data[count -2],2);
+			   memcpy(tasknum,&data[count -2],2);
 				  printf("tasknum %s \r\n",tasknum);
 			 }else if(count1 ==4){
 			 
-			memcpy(bind_dev_version,&data[count -6],6);
+			  memcpy(bind_dev_version,&data[count -6],6);
 				  printf("version_bd %s \r\n",version_bd);
 			 }
 			 	}
@@ -434,56 +432,41 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 					
 					memcpy(&buf[lenth1],",",1);
 					lenth1+=1;
-			
+					memcpy(&buf[lenth1],group_num_back,2);
+					lenth1+=2;
+					memcpy(&buf[lenth1],",",1);
+					lenth1+=1;
 					memcpy(&buf[lenth1],"OK",2);
 					lenth1+=2;
 					set_ble_red_light(0);
 			
-						save_nv_buf[69] = bbind_num;
+						for(i = 0; i<100 ;i++){
+						if(send_wl_temp[i][14] == 0){
+						if(0 == memcmp(send_wl_temp[i],addr_buf,12)){
+									 send_wl_temp[i][14] =1;		
+									}
+							}else{
+									continue ;
+								
+							}
+						}
+						memcpy(&buf[lenth1],aoa_at_end_tok,4);
+						lenth1 +=4;
+					printf("bind buf back %s \r\n",buf);
+					memcpy(bind_bak_buf,data,len);
+					aoa_send_response(buf, lenth1);
+					
 //						set_nvram_save_data(save_nv_buf);
-			    get_task_bdev_id(bind_command_buf_bak,bind_command_len_bak,10);
+			   // get_task_bdev_id(bind_command_buf_bak,bind_command_len_bak,10);
 			
 			
 		}else if(data[count-1] == 'd' && data[count-2] == 'e'&& data[count-3] == 'l'){
 		
-					memcpy(&buf[lenth1],",",1);
-					lenth1+=1;
-			
-					memcpy(&buf[lenth1],"ERROR",5);
-					lenth1+=5;
-			
-					memcpy(&buf[lenth1],",",1);
-					lenth1+=1;
-			
-					memcpy(&buf[lenth1],"1",1);
-					lenth1+=1;
-			   
-				  for(i =0;i<100;i++){
-						if(send_wl_temp[i][0] =='1'){
-							if(send_wl_temp[i][13] == ((group_num_back[0] -'0')*10)  + (group_num_back[1] -'0')){
-							   if(memcmp(send_wl_temp[i],addr_buf,12) == 0){
-								   memset(send_wl_temp[i],0x00,15);
-									 if(bbind_num >= 1)
-										bbind_num -=1;
-									 
-						     // set_nvram_save_data(save_nv_buf);
-								 }							
-							}						
-						}else{
-							continue;
-				    }
-					
-					}		
+		
 		}
 
-		memcpy(&buf[lenth1],aoa_at_end_tok,4);
-			lenth1 +=4;
-		printf("bind buf back %s \r\n",buf);
-		memcpy(bind_bak_buf,data,len);
-		aoa_send_response(buf, lenth1);
-	
-	
-				
+		
+					
 		//	memset(backup_buf,0x00,50);
 }
 extern uint8_t ubind_back[50];

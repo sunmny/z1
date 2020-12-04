@@ -416,9 +416,9 @@ void mytestTask1(void const * argument)
 		if(zdev_isbind){
 			if(send_count_flag1 ==300){
 			if(!zdev_bind_flag){
-				set_ble_power_off();
-				osDelay(100);
-				set_ble_power();	
+				//set_ble_power_off();
+				//osDelay(100);
+				//set_ble_power();	
 				//MX_USART4_UART_Init();
 					send_count_flag1 = 0;
 				//osDelay(500);
@@ -431,18 +431,18 @@ void mytestTask1(void const * argument)
 			}
 
 		if(send_count_flag == 60){
-				aoa_at_handle_bbeatnow();
+			//	aoa_at_handle_bbeatnow();
 			//task_gps_message_put(0x02);
 		}
 		if(send_count_flag == 80){
-				aoa_at_handle_bpalert();
+				//aoa_at_handle_bpalert();
 			
 		}
 		if(send_count_flag == 13){
 			rn_receive_and_handle();
 			}
 		if(send_count_flag == 100){
-			aoa_at_handle_zlocation();
+			//aoa_at_handle_zlocation();
 			send_count_flag =0;
 			//BatTimerCallback();
 		}else{

@@ -165,7 +165,7 @@ void task_init(void)
 		
 		get_nvram_sn(gsn_buf);
 		memcpy(zdev_set.mydev_id,gsn_buf,12);
-		printf("gsn_buf = %s \r\n",gsn_buf);
+		printf("gsn_buf = %s \r\n",zdev_set.mydev_id);
 		
 
 		

@@ -135,6 +135,8 @@ typedef struct {
 			uint8_t zrd_test_status;
 }zdevice_status;
 struct zdevice_setting{
+					uint8_t other_id[12];
+					uint8_t mydev_id[12];
 					uint8_t isMdev;
 					uint8_t bbat_report;
 					uint8_t zbattery;
@@ -158,8 +160,7 @@ struct zdevice_setting{
 					uint8_t bdev_report_time[4];					
 					uint8_t rn_num[8];
 					uint8_t rd_num[8];
-					uint8_t other_id[12];
-					uint8_t mydev_id[12];
+		
 					//uint8_t report_ip[36];			
 					//uint8_t report_apn[36];
 					//uint8_t user_name[36];

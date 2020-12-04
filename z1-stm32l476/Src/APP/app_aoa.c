@@ -108,6 +108,7 @@ uint8_t aoa_at_handle_breportinfotime(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_taskover(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_bboxunlock(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_taskbegin(uint8_t *data, uint16_t len, uint8_t idx);
+uint8_t aoa_at_handle_network(uint8_t *data, uint16_t len, uint8_t idx);
 /***************at only for test start**********************/
 uint8_t aoa_at_handle_rdmsg(uint8_t *data, uint16_t len, uint8_t idx);
 /***************at only for test end**********************/
@@ -117,7 +118,7 @@ uint8_t get_zdevice_battery(void);
 uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_close_bdev_report(uint8_t *data, uint16_t len, uint8_t idx);
 void save_dev_addd_nv(void);
-
+extern uint8_t send_wl_temp[100][15];
 
 uint8_t task_flag_start =0;
 struct zdevice_setting zdev_set;
@@ -128,16 +129,18 @@ uint8_t bbind_num =0;
 
 uint8_t get_bdev_group_num(void)
 {
-	 
-	group_num_data = (bbind_num /BDEVICE_GROUP_NUM) +1;
-  
+		if((zdev_set.isMdev == 0) || (zdev_set.isMdev == 1))
+			group_num_data = (bbind_num /BDEVICE_GROUP_NUM) +1;
+		else
+			group_num_data = (bbind_num /BDEVICE_GROUP_NUM) +11;
+		
   return group_num_data;
 }
 	
 static const aoa_at_handle_symbol aoa_at_table[SUPPORT_AT_NUM] = {
 	{test_begin,(uint8_t *)"AT+START="},
 	{aoa_at_handle_zsaveb, (uint8_t *)"AT+ZSAVEB="},
-	{aoa_at_handle_taskbegin, (uint8_t *)"AT+TASK"},
+	{aoa_at_handle_network, (uint8_t *)"AT+NETWORK="},
 	{aoa_at_handle_zcall, (uint8_t *)"AT+ZCALL?"},
 	{aoa_at_handle_zbeat, (uint8_t *)"AT+ZBEAT?"},
 	{aoa_at_handle_zbind, (uint8_t *)"AT+ZBIND="},	
@@ -171,6 +174,53 @@ static const aoa_at_handle_symbol aoa_at_table[SUPPORT_AT_NUM] = {
 /***************at only for test end**********************/
 
 };
+//AT+NETWORK=107890,107891##
+uint8_t aoa_at_handle_network(uint8_t *data, uint16_t len, uint8_t idx)
+{
+				uint8_t lenth = 0;
+				uint8_t temp1[6],temp[6];
+				uint8_t temp3[12];
+				uint8_t back_buf[13];
+			  printf("zdev_set.mydev_id = %s \r\n",zdev_set.mydev_id);
+	
+				lenth = strlen("AT+NETWORK=");
+	
+		
+				memcpy(back_buf,"+NETWORK:OK##",13);
+	
+				memcpy(temp,&data[lenth],6);		
+				memcpy(temp1,&data[lenth+7],6);
+				memcpy(temp3,"10123456",8);
+				memcpy(&temp3[8],&temp[2],4);
+	
+				//zdev_set.mydev_id
+		if((temp1[0]=='1')&&temp1[1] == '0'){
+			printf("zdev_set.mydev_id = %s \r\n",zdev_set.mydev_id);
+	
+		    if(0 == memcmp(zdev_set.mydev_id,temp3,12)){
+						zdev_set.isMdev =1;  //zhu
+						memcpy(zdev_set.other_id,"10123456",8);
+						memcpy(&zdev_set.other_id[8],&temp1[2],4);
+						printf("zdev_set.mydev_id = %s \r\n",zdev_set.mydev_id);
+	
+				}else{
+					zdev_set.isMdev = 2; // cong
+					memcpy(zdev_set.other_id,"10123456",8);
+					memcpy(&zdev_set.other_id[8],&temp[2],6);
+				}
+					zdev_set.zdev_num = 2;
+			}else {
+			
+			/********* only one z1 *********/
+					zdev_set.zdev_num = 1;
+				
+			    zdev_set.isMdev =0;		
+			
+			}
+			printf("zdev_set.mydev_id = %s \r\n",zdev_set.mydev_id);
+		aoa_send_response(back_buf,13);
+}
+
 uint8_t save_data_type=0;
 
 uint8_t  get_save_data_type(void)
@@ -1335,141 +1385,39 @@ uint8_t aoa_get_wlist_addr(uint8_t *data, uint16_t len, uint8_t idx)
 	
 
 }
+uint8_t wlist_count =0;
+uint8_t wlist_group_count =0;
+//AT+ZSAVEB=1,01,111234567890123##
+//+ZSAVEB:1,01,111234567890123,OK##
+uint8_t send_group_num_buf[20] = {0};
 
 uint8_t aoa_at_handle_zsaveb(uint8_t *data, uint16_t len, uint8_t idx) //test 
 {
-	uint16_t totallen=0,lenth=0,ret =0;
-	uint8_t response[64];
-	zdev_set.isMdev =0;
-	
-	ret = aoa_get_wlist_addr( data,  len,  idx);
-		
-	
-	
-	
-	
-	
-	
-	#if 0
-	if(ret == 0){
-		if(data[10] == ','){
+	    uint8_t lenth = 0,i =0,flag =0;
+			uint8_t back_buf[30];
+			lenth = strlen("AT+ZSAVEB=1,01,");
+	    memcpy(back_buf,&data[2],25);
+			memcpy(send_wl_temp[wlist_count],&data[lenth],12); 
+			send_wl_temp[wlist_count][13] = (data[12] - '0')*10 + (data[13] - '0');
+			for(i = 0;i<20;i++){
+		     if(send_group_num_buf[i]== send_wl_temp[wlist_count][13]){
+				  // MAX_GROUP_NUM = send_wl_temp[wlist_count][13];
+					 flag = 1;
+					 break;
+					 
+				 }
+			}
+			if(!flag){
+						send_group_num_buf[wlist_group_count] = send_wl_temp[wlist_count][13];
+						wlist_group_count++;
+			}
 			
-			memcpy(response,"+ZSAVEB:,",lenth+1);
-			totallen+=lenth;
-			totallen+=1;
-			//memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][12],1);
-			totallen+=1;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			//memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][0],12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],"OK",2);
-			totallen+=2;
-	}else if (data[10] == '1'){
-	
-			memcpy(response,"+ZSAVEB:",lenth);
-			totallen+=lenth;
-			memcpy(&response[totallen],zdev_set.other_id,12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][12],1);
-			totallen+=1;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][0],12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],"OK",2);
-			totallen+=2;
-	
-	}
-	
-	}else if( ret ==1 ){
-	
-	if(data[10] == ','){
+			send_wl_temp[wlist_count][12]  =  data[10] - '0';
 			
-			memcpy(response,"+ZSAVEB:,",lenth+1);
-			totallen+=lenth;
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][12],1);
-			totallen+=1;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][0],12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],"ERROR,1",7);
-			totallen+=7;
-	}else if (data[10] == '1'){
-	
-			memcpy(response,"+ZSAVEB:",lenth);
-			totallen+=lenth;
-			memcpy(&response[totallen],zdev_set.other_id,12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][12],1);
-			totallen+=1;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][0],12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],"ERROR,1",7);
-			totallen+=7;
-	
-	}
-	
-	
-	}else if(ret == 2){
-	
-	if(data[10] == ','){
-			
-			memcpy(response,"+ZSAVEB:,",lenth+1);
-			totallen+=lenth;
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][12],1);
-			totallen+=1;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][0],12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],"ERROR,2",7);
-			totallen+=7;
-	}else if (data[10] == '1'){
-	
-			memcpy(response,"+ZSAVEB:",lenth);
-			totallen+=lenth;
-			memcpy(&response[totallen],zdev_set.other_id,12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][12],1);
-			totallen+=1;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],&zdev_set.white_list[white_list_count-1][0],12);
-			totallen+=12;
-			memcpy(&response[totallen],",",1);
-			totallen+=1;
-			memcpy(&response[totallen],"ERROR,2",7);
-			totallen+=7;	
-	}	
-	
-	}
-		memcpy(&response[totallen],aoa_at_end_tok,AT_END_TOK_LEN);
-	totallen+=AT_END_TOK_LEN;
+			wlist_count ++;
+			memcpy(&back_buf[25],",OK##",5);
+			aoa_send_response(back_buf,30);
 
-		return aoa_send_response(response,totallen);
-			#endif
 }
 uint8_t aoa_at_handle_zbeat(uint8_t *data, uint16_t len, uint8_t idx)  //需要获取实际电量，rd的值
 {
@@ -1651,7 +1599,7 @@ uint8_t handle_bdevice_airplanemode(uint8_t *data, uint16_t len, uint8_t idx)
 }
 
 uint8_t addr_nv_buf[1500];
-extern uint8_t send_wl_temp[100][15];
+
 void clear_dev_nv(void)
 {
 	memset(addr_nv_buf,0x00,1500);
@@ -1927,7 +1875,7 @@ uint8_t get_command_type(void)
 	
 extern osTimerId LedTimerHandle;
 extern uint8_t devinfo_flag ;
-
+uint8_t task_send_count =0;
 uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
 {
 	
@@ -1943,21 +1891,21 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
 		save_nv_buf[1] = '0';
 	}
 	
-	get_bdev_group_num();
-	save_nv_buf[69] =  bbind_num;
+	//get_bdev_group_num();
+	//save_nv_buf[69] =  bbind_num;
 	
 	copy_addr_group();
 	
-
+ 
   set_command_type(0xf1);
 	if(!get_timer_status()){
 				 osTimerStart(LedTimerHandle, 3500);
 					set_timer_status(1);
 	}
-	save_dev_addr();
+	//save_dev_addr();
 	
 }
-uint8_t task_send_count =1;
+
 
 void send_bbind_command(void)
 {
@@ -1976,7 +1924,7 @@ void send_bbind_command(void)
 	commnd_buf[totallen1] = ',';
 	totallen1 +=1;
 	
-	if(zdev_set.zdev_num ==2){
+	if(zdev_set.isMdev !=0){
 	
 		memcpy(&commnd_buf[totallen1],zdev_set.other_id,12);
 		totallen1 += 12;
@@ -2002,27 +1950,34 @@ void send_bbind_command(void)
 		commnd_buf[totallen1] = ',';
 	  totallen1 +=1;
 	
-	   commnd_buf[totallen1] = task_send_count/10 +'0';
+	
+		if(send_group_num_buf[task_send_count] !=0){
+	   commnd_buf[totallen1] = send_group_num_buf[task_send_count]/10 +'0';
 			totallen1 += 1;
-			commnd_buf[totallen1] = task_send_count%10 +'0';
+			commnd_buf[totallen1] = send_group_num_buf[task_send_count]%10 +'0';
 			totallen1 += 1;
+			task_send_count++;
+		}else {
+			task_send_count = 0;
+			commnd_buf[totallen1] = send_group_num_buf[task_send_count]/10 +'0';
+			totallen1 += 1;
+			commnd_buf[totallen1] = send_group_num_buf[task_send_count]%10 +'0';
+			totallen1 += 1;
+			task_send_count++;
+		}
+	
 	   commnd_buf[totallen1] = ',';
-	  totallen1 +=1;
+	   totallen1 +=1;
 	   memcpy(&commnd_buf[totallen1],"01",2);
 			totallen1 += 2;
 			 memcpy(&commnd_buf[totallen1],"##",2);
 			totallen1 += 2;
 			printf("task start commnd_buf %s \r\n",commnd_buf);
-				get_bdev_group_num();
-			if(task_send_count<group_num_data){
-					task_send_count ++;
-			  }else {
-				task_send_count = 1;
-				}
-	
+				//get_bdev_group_num();
+
 		   ble_send_response(commnd_buf, totallen1);	
 }
-uint8_t air_command_send_count =1;
+uint8_t air_command_send_count =0;
 extern uint8_t save_flas;
 void send_airmode_command(void)
 {
@@ -2059,34 +2014,38 @@ void send_airmode_command(void)
 		lenth1 +=1;
 		group_location_count = lenth1;
 		
-		get_bdev_group_num();
+		//get_bdev_group_num();
 		
 		
+			if(send_group_num_buf[air_command_send_count] !=0){
+	   blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
+			lenth1 +=1;
+			blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
+			lenth1 += 1;
+			air_command_send_count++;
+		}else {
+			task_send_count = 0;
+			set_command_type(0xff);
+			save_flas =1;
+			//blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
+		//	lenth1 +=1;
+		//	blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
+		//	lenth1 +=1;
+			//air_command_send_count++;
+		}
 		
+		//blebuf[lenth1] = air_command_send_count /10 + '0';
+		//lenth1 +=1;
 		
-		blebuf[lenth1] = air_command_send_count /10 + '0';
-		lenth1 +=1;
-		
-		blebuf[lenth1] = air_command_send_count %10 +'0';
-		lenth1 +=1;
+		//blebuf[lenth1] = air_command_send_count %10 +'0';
+		//lenth1 +=1;
 		
 		memcpy(&blebuf[lenth1],"##",2);
 		lenth1 +=2;
 		ble_send_response(blebuf,lenth1);
-		if(air_command_send_count <group_num_data){
-			air_command_send_count++;
-		}else{
-			air_command_send_count =1;
-			set_command_type(0xff);
-			save_flas =1;
-	}
-			
 	
-		
-
-
 }
-uint8_t ubind_command_count =1;
+uint8_t ubind_command_count =0;
 extern uint8_t ubind_all_flag;
 void send_ubind_command(void)
 {
@@ -2119,12 +2078,33 @@ void send_ubind_command(void)
 					 totallen +=1;
 				
 					
+		if(send_group_num_buf[ubind_command_count] !=0){
+	   response[totallen] = send_group_num_buf[ubind_command_count]/10 +'0';
+			totallen +=1;
+			response[totallen] = send_group_num_buf[ubind_command_count]%10 +'0';
+			totallen += 1;
+			ubind_command_count++;
+		}else {
+			ubind_command_count = 0;
+			set_command_type(0xff);
+			
+						bbind_num= 0;
+						if(get_timer_status()){
+						osTimerStop(LedTimerHandle);
+						set_timer_status(0);
+						ubind_all_flag =1;
+						}
+			//blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
+		//	lenth1 +=1;
+		//	blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
+		//	lenth1 +=1;
+			//air_command_send_count++;
+		    }
+					//response[totallen] = ubind_command_count/10 + '0';
+					//totallen+=1;
+					//response[totallen] = ubind_command_count%10 + '0';
 					
-					response[totallen] = ubind_command_count/10 + '0';
-					totallen+=1;
-					response[totallen] = ubind_command_count%10 + '0';
-					
-					totallen+=1;
+					//totallen+=1;
 					
 		       memcpy(&response[totallen],"##",2);
 					
@@ -2132,22 +2112,7 @@ void send_ubind_command(void)
 		
 				  ble_send_response(response, totallen);
 					printf("ubind send ble :%s \r\n",response);
-			     get_bdev_group_num();
-					if(ubind_command_count <group_num_data){
-						ubind_command_count++;
-					}else{
-							ubind_command_count =1;
-						set_command_type(0xff);
-						bbind_num= 0;
-						if(get_timer_status()){
-						osTimerStop(LedTimerHandle);
-						set_timer_status(0);
-						ubind_all_flag =1;
-						}
-					}
-					
-				
-					
+							
 
 }
 
@@ -2244,14 +2209,11 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 //	osTimerStop(ReportTimerHandle);	
 	uint16_t totallen=0,lenth = 0,lenth1;
 	//uint8_t send_buf[100];
-	uint8_t backbuf[40],bdadd_buf[80];
+	uint8_t backbuf[40],bdadd_buf[80],devid_buf[12];
 	uint8_t count =0,i =0;
 	uint8_t count1 =0;
 	uint8_t backlen  = 0;
   uint8_t group_num = 0;
-	
-	
-	
 	
 	
 	devinfo_start_flag =0;
@@ -2264,47 +2226,12 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 			set_command_type(0xff);
 		}
 		
-		
-		group_num = (bbind_num / BDEVICE_GROUP_NUM)+1;
-	printf("group_num = %d \r\n",group_num );
-		
-		
-	for(i = 0;i<100;i++){
-	   if(send_wl_temp[i][0] == '1'){
-			 if(memcmp(send_wl_temp[i],&data[11],12) ==0){
-					new_dev =1;
-					group_num = send_wl_temp[i][13];
-				 break;
-			 }
-					
-		 }else{
-		      continue;
-		 }
-	
-	}
-
-	printf("new_dev = %d \r\n",new_dev );
-	
-	
-	
-	
-	zdev_set.isMdev =1;
-	zdev_bind_flag =1 ;
-	
-	
+	  zdev_bind_flag =1 ;
 		save_nv_buf[1] = '1';
-	
-		printf("*********test6*******\r\n");
-//		set_nvram_save_data(save_nv_buf);
-	printf("*********test7******\r\n");
-//	osTimerStop(ReportTimerHandle);
-	//backlen = strlen("AT+BBIND=");
 	memset(apn_buf,0x00,50);
 	memcpy(backup_buf,data,len);
 	hw_bd2_close();
-	printf("*********test8*******\r\n");
-	//	set_nvram_save_data(save_nv_buf);
-		printf("*********test9*******\r\n");
+
 	lenth = strlen("bbind:");
 	lenth1 = lenth;
 	//memcpy(apn_buf,"bbind=",lenth);
@@ -2322,13 +2249,13 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 						memcpy(bdadd_buf,"bbind:",lenth1);
 					memcpy(&bdadd_buf[lenth1],&data[count+1],12);
 						
-					memcpy(send_wl_temp[bbind_num],&data[count+1],12);
+					memcpy(devid_buf,&data[count+1],12);
 					
 						lenth1 +=12;
-					//memcpy(&bdadd_buf[19],"##",2);
+					
 					taskidnum = data[count-1] - '0';
-					send_wl_temp[bbind_num][12] = taskidnum; 
-						printf("copy addr1 %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][12]);
+					//send_wl_temp[bbind_num][12] = taskidnum; 
+						
 						
 					if(data[count+14] == '1')
 						memcpy(&apn_buf[totallen],&data[count+14],11);
@@ -2342,12 +2269,12 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 					
 					memcpy(bdadd_buf,"bbind:",lenth1);
 					memcpy(&bdadd_buf[lenth1],&data[count+1],12);
-					memcpy(send_wl_temp[bbind_num],&data[count+1],12);
+					memcpy(devid_buf,&data[count+1],12);
 				
 					lenth1 +=12;
 					taskidnum = data[count-1] - '0';
-				  send_wl_temp[bbind_num][12] = taskidnum; 
-				printf("copy addr2 %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][12]);
+				 // send_wl_temp[bbind_num][12] = taskidnum; 
+				//printf("copy addr2 %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][12]);
 					//memcpy(&bdadd_buf[19],"##",2);
 					if(data[count+14] == '1')
 						memcpy(&apn_buf[totallen],&data[count+14],11);
@@ -2360,50 +2287,63 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 		count++;
 	}
 	
-  if(!new_dev)
-		send_wl_temp[bbind_num][13] = group_num; 
 	
-	printf("mac group_nu %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][13]);
+		for(i = 0; i<100 ;i++){
+				if(send_wl_temp[i][14] == 0){
+						if(0 == memcmp(send_wl_temp[i],devid_buf,12)){
+									new_dev = 0;
+									group_num = send_wl_temp[i][13];
+						}else{
+								  new_dev = 1;
+							    
+						}
+				
+				}else{
+					continue ;
+				}
+	}
+		if(new_dev){
+			group_num = get_bdev_group_num();
+			send_wl_temp[bbind_num][13] = group_num;
+			memcpy(send_wl_temp[bbind_num],devid_buf,12);
+			bbind_num ++;
+		} 
 	
-	if(new_dev){
-			new_dev =0;
-	}else{
-		bbind_num ++;
-	}	
+	 printf("mac group_nu %s %d \r\n",send_wl_temp[bbind_num],send_wl_temp[bbind_num][13]);
 	
-bdadd_buf[lenth1] = ',';
-lenth1+=1;
+    bdadd_buf[lenth1] = ',';
+    lenth1+=1;
 	
 	
-memcpy(&bdadd_buf[lenth1],zdev_set.mydev_id,12);
-lenth1+=12;
+	  memcpy(&bdadd_buf[lenth1],zdev_set.mydev_id,12);
+	  lenth1+=12;
 	
-bdadd_buf[lenth1] = ',';
-lenth1+=1;
+    bdadd_buf[lenth1] = ',';
+   lenth1+=1;
 	
 	
-	if(zdev_set.zdev_num ==2){
+	 if(zdev_set.isMdev !=0){
 	
 		
-		memcpy(&bdadd_buf[lenth1],zdev_set.other_id,12);
-   lenth1+=12;
+			memcpy(&bdadd_buf[lenth1],zdev_set.other_id,12);
+			lenth1+=12;
 	
 		
-	memcpy(&apn_buf[totallen],zdev_set.other_id,12);
-	totallen += 12;
+			memcpy(&apn_buf[totallen],zdev_set.other_id,12);
+			totallen += 12;
 	
-	apn_buf[totallen] = ',';
-	totallen +=1;
-	}else{
+			apn_buf[totallen] = ',';
+			totallen +=1;
+	 }else{
 		
 			memcpy(&bdadd_buf[lenth1],"000000000000",12);
-   lenth1+=12;
+			lenth1+=12;
 		
 			memcpy(&apn_buf[totallen],"000000000000",12);
-	totallen += 12;
+			totallen += 12;
 	
-	apn_buf[totallen] = ',';
-	totallen +=1;
+			apn_buf[totallen] = ',';
+			totallen +=1;
 		
 		
 		
@@ -2411,43 +2351,42 @@ lenth1+=1;
 			bdadd_buf[lenth1] = ',';
 			lenth1+=1;
 	
-	bdadd_buf[lenth1] = '0';
+			bdadd_buf[lenth1] = '0';
 			lenth1+=1;
 
-	lenth = strlen(zdev_set.mydev_id);
-	memcpy(&apn_buf[totallen],zdev_set.mydev_id,12); //调试注释掉 20190529
-	//memcpy(&send_buf[totallen],"112233998877",12);
-	totallen += 12;
-	if((taskidnum ==1) || (taskidnum ==2)){
-		
-		bdadd_buf[lenth1] = taskidnum + '0';
+			lenth = strlen(zdev_set.mydev_id);
+			memcpy(&apn_buf[totallen],zdev_set.mydev_id,12); //调试注释掉 20190529
+		//memcpy(&send_buf[totallen],"112233998877",12);
+		totallen += 12;
+		if((taskidnum ==1) || (taskidnum ==2)){
+			bdadd_buf[lenth1] = taskidnum + '0';
 			lenth1+=1;
 			apn_buf[totallen] = taskidnum + '0';
 	//send_buf[totallen] = ',';
-	totallen +=1;
-	}
+			totallen +=1;
+		}
 
 
-bdadd_buf[lenth1] = ',';
-			lenth1+=1;
+		bdadd_buf[lenth1] = ',';
+		lenth1+=1;
 
-if(group_num <10){
+	if(group_num <10){
 	 bdadd_buf[lenth1] = '0';
    lenth1+=1;
    bdadd_buf[lenth1] = group_num + '0';
    lenth1+=1;
-}else{
+	}else{
   
    bdadd_buf[lenth1] = (group_num /10) +'0';
    lenth1+=1;
    bdadd_buf[lenth1] = (group_num%10) + '0';
    lenth1+=1;
-}
-bdadd_buf[lenth1] = ',';
+	}
+	bdadd_buf[lenth1] = ',';
 			lenth1+=1;
 	memcpy(&bdadd_buf[lenth1],"15",2);
    lenth1+=2;
-bdadd_buf[lenth1] = ',';
+	bdadd_buf[lenth1] = ',';
 			lenth1+=1;
 	memcpy(&bdadd_buf[lenth1],"01",2);
    lenth1+=2;
@@ -2458,10 +2397,10 @@ bdadd_buf[lenth1] = ',';
 	ble_send_response(bdadd_buf, lenth1);
 	
 	//ble_send_response(apn_buf, totallen);
-		copy_addr_group();
+	
 if(task_flag_start &&(!get_timer_status())){
-	 osTimerStart (LedTimerHandle, 3500);
-	set_timer_status(1);
+	  osTimerStart (LedTimerHandle, 3500);
+	  set_timer_status(1);
 	
 }
 	if(task_flag_start){
@@ -2469,9 +2408,11 @@ if(task_flag_start &&(!get_timer_status())){
 	}
 	memset(backbuf,0x00,40);
 	memcpy(backbuf,"+BBIND:",7);
-	memcpy(&backbuf[7],&data[9],14);	
-	memcpy(&backbuf[21],",OK",3);	
-	memcpy(&backbuf[24],aoa_at_end_tok,AT_END_TOK_LEN);	
+	memcpy(&backbuf[7],&data[9],14);
+  backbuf[21] = (group_num /10) +'0';
+ 	 backbuf[22] = (group_num %10) +'0';
+	memcpy(&backbuf[23],",OK",3);	
+	memcpy(&backbuf[26],aoa_at_end_tok,AT_END_TOK_LEN);	
  
 	if(task_flag_start)
 			devinfo_start_flag =1;
