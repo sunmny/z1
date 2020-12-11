@@ -19,6 +19,7 @@ struct bdinfo{
 				uint8_t lost_flag;
 				uint8_t version_bd[8];
 				uint8_t addr[12];
+				uint8_t bbind_sucess;
 				
 };
 
@@ -165,7 +166,7 @@ uint8_t  copy_addr_group(void)
    uint8_t i =0,count=0;
 		memset(bd_info,0x00,sizeof(bd_info));
 	for(i = 0;i<100;i++){
-		 if(send_wl_temp[i][0] !='1'){
+		 if(send_wl_temp[i][0] !='1' ||send_wl_temp[i][14]==0){
 					continue;
 		 }else{
 				memcpy(bd_info[count].addr,send_wl_temp[i],12);
@@ -309,18 +310,35 @@ void ReportTimerCallback(void)
 	}
 			
 }
-
+uint8_t uart_2640_flag =0;
+uint16_t uart_2640_flag_count =0;
 void devinfo_report_task(void const * argument)
 {
 
 		while(1){
-				osDelay(200);	
+				osDelay(100);	
 			if(devinfo_start_flag)
 				ReportTimerCallback();
+			if(uart_2640_flag ==0){
+				uart_2640_flag_count ++;
+				if((uart_2640_flag_count>30)){
+					printf("not receive from 2640 \r\n");
+				if(bleisok ==1){
+				set_ble_power_off();
+				osDelay(100);
+				set_ble_power();
+				}					
+				uart_2640_flag_count = 0;
+				}
+			}else{
+				uart_2640_flag = 0;
+				uart_2640_flag_count =0;
+			}
 		}
 
 
 }
+
 
 
 //extern osTimerId ReportTimerHandle;
@@ -599,11 +617,13 @@ uint8_t ble_receive_and_handle(void)
 	memset(ble_uart_data_loop,0x00,sizeof(ble_uart_data_loop));
 	hw_uart4_receive(ble_uart_data_loop, &ble_uart_data_loop_len, 0xff);
 	printf("ble %s \r\n",ble_uart_data_loop);
+	
 	//hw_uart1_send(ble_uart_data_loop, ble_uart_data_loop_len);
 	if (ble_uart_data_loop_len>0)
 	{
 		//hw_uart2_send(ble_uart_data_loop, ble_uart_data_loop_len);
 		ret=ble_uart_data_handle(ble_uart_data_loop,ble_uart_data_loop_len);
+		uart_2640_flag = 1;
 		ble_uart_data_loop_len=0;
 	}
 	return ret;

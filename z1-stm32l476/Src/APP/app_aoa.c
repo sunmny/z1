@@ -206,7 +206,7 @@ uint8_t aoa_at_handle_network(uint8_t *data, uint16_t len, uint8_t idx)
 				}else{
 					zdev_set.isMdev = 2; // cong
 					memcpy(zdev_set.other_id,"10123456",8);
-					memcpy(&zdev_set.other_id[8],&temp[2],6);
+					memcpy(&zdev_set.other_id[8],&temp[2],4);
 				}
 					zdev_set.zdev_num = 2;
 			}else {
@@ -379,8 +379,8 @@ uint8_t report_charing_soc(void)
 	zdev_set.zbat_soc_bak = zdev_set.zbat_soc;
 	zdev_set.zbat_soc1_bak = zdev_set.zbat_soc1;
 	
-	if(0== task_flag_start)
-			ble_send_response(report_charing_buf,32);
+	//if(0== task_flag_start)
+		//	ble_send_response(report_charing_buf,32);
 }
 extern uint8_t version_info[10];
 uint8_t aoa_at_handle_bbeatnow(void)
@@ -1265,7 +1265,7 @@ uint8_t aoa_at_handle_zbind(uint8_t *data, uint16_t len, uint8_t idx)
 	uint8_t response[64];
 	
 	
-		zdev_set.zdev_num = 1;//get_zdevice_num(data,len,idx);
+		//zdev_set.zdev_num = 1;//get_zdevice_num(data,len,idx);
 	
 	//get_zdev_id(data,len,idx);
 
@@ -1415,6 +1415,7 @@ uint8_t aoa_at_handle_zsaveb(uint8_t *data, uint16_t len, uint8_t idx) //test
 			send_wl_temp[wlist_count][12]  =  data[10] - '0';
 			
 			wlist_count ++;
+			bbind_num++;
 			memcpy(&back_buf[25],",OK##",5);
 			aoa_send_response(back_buf,30);
 
@@ -1918,23 +1919,51 @@ void send_bbind_command(void)
 	
 	printf("group_num_data = %d \r\n",group_num_data);
 
+		  if(zdev_set.isMdev ==0){
+			memcpy(&commnd_buf[totallen1],zdev_set.mydev_id,12);
+			totallen1+=12;
 	
-		memcpy(&commnd_buf[totallen1],zdev_set.mydev_id,12);
-		totallen1 +=12;
-	commnd_buf[totallen1] = ',';
-	totallen1 +=1;
-	
-	if(zdev_set.isMdev !=0){
-	
-		memcpy(&commnd_buf[totallen1],zdev_set.other_id,12);
-		totallen1 += 12;
-	
-	
-	}else{
-		
+			commnd_buf[totallen1] = ',';
+			totallen1+=1;
+			
 			memcpy(&commnd_buf[totallen1],"000000000000",12);
-			totallen1 += 12;
-	}
+			
+			totallen1+=12;
+		}else if(zdev_set.isMdev ==1){
+				memcpy(&commnd_buf[totallen1],zdev_set.mydev_id,12);
+			totallen1+=12;
+	
+			commnd_buf[totallen1] = ',';
+			totallen1+=1;
+			
+			memcpy(&commnd_buf[totallen1],zdev_set.other_id,12);
+			totallen1+=12;
+		
+		}else if(zdev_set.isMdev ==2){
+			memcpy(&commnd_buf[totallen1],zdev_set.other_id,12);
+			totallen1+=12;
+	
+			commnd_buf[totallen1] = ',';
+			totallen1+=1;
+			memcpy(&commnd_buf[totallen1],zdev_set.mydev_id,12);
+			totallen1+=12;
+		}
+	//	memcpy(&commnd_buf[totallen1],zdev_set.mydev_id,12);
+	//	totallen1 +=12;
+	//commnd_buf[totallen1] = ',';
+	//totallen1 +=1;
+	
+	//if(zdev_set.isMdev ==0){
+	
+	//	memcpy(&commnd_buf[totallen1],zdev_set.other_id,12);
+	//	totallen1 += 12;
+	
+	
+	//}else{
+		
+		//	memcpy(&commnd_buf[totallen1],"000000000000",12);
+			//totallen1 += 12;
+	///}
 	
 	commnd_buf[totallen1] = ',';
 	totallen1 +=1;
@@ -2314,40 +2343,65 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
     bdadd_buf[lenth1] = ',';
     lenth1+=1;
 	
+	  if(zdev_set.isMdev ==0){
+			memcpy(&bdadd_buf[lenth1],zdev_set.mydev_id,12);
+			lenth1+=12;
 	
-	  memcpy(&bdadd_buf[lenth1],zdev_set.mydev_id,12);
-	  lenth1+=12;
+			bdadd_buf[lenth1] = ',';
+			lenth1+=1;
+			
+			memcpy(&bdadd_buf[lenth1],"000000000000",12);
+			
+			lenth1+=12;
+		}else if(zdev_set.isMdev ==1){
+				memcpy(&bdadd_buf[lenth1],zdev_set.mydev_id,12);
+			lenth1+=12;
 	
-    bdadd_buf[lenth1] = ',';
-   lenth1+=1;
-	
-	
-	 if(zdev_set.isMdev !=0){
-	
+			bdadd_buf[lenth1] = ',';
+			lenth1+=1;
+			
+			memcpy(&bdadd_buf[lenth1],zdev_set.other_id,12);
+			lenth1+=12;
 		
+		}else if(zdev_set.isMdev ==2){
 			memcpy(&bdadd_buf[lenth1],zdev_set.other_id,12);
 			lenth1+=12;
 	
-		
-			memcpy(&apn_buf[totallen],zdev_set.other_id,12);
-			totallen += 12;
-	
-			apn_buf[totallen] = ',';
-			totallen +=1;
-	 }else{
-		
-			memcpy(&bdadd_buf[lenth1],"000000000000",12);
+			bdadd_buf[lenth1] = ',';
+			lenth1+=1;
+			memcpy(&bdadd_buf[lenth1],zdev_set.mydev_id,12);
+			
 			lenth1+=12;
-		
-			memcpy(&apn_buf[totallen],"000000000000",12);
-			totallen += 12;
 	
-			apn_buf[totallen] = ',';
-			totallen +=1;
+		}
+	
+	
+	// if(zdev_set.isMdev !=0){
+	
+		
+			//memcpy(&bdadd_buf[lenth1],zdev_set.other_id,12);
+			//lenth1+=12;
+	
+		
+			//memcpy(&apn_buf[totallen],zdev_set.other_id,12);
+			//totallen += 12;
+	
+			//apn_buf[totallen] = ',';
+			//totallen +=1;
+	// }else{
+		
+			//memcpy(&bdadd_buf[lenth1],"000000000000",12);
+			//lenth1+=12;
+		
+			//memcpy(&apn_buf[totallen],"000000000000",12);
+			//totallen += 12;
+	
+		//	apn_buf[totallen] = ',';
+		//	totallen +=1;
 		
 		
 		
-	}
+	//}
 			bdadd_buf[lenth1] = ',';
 			lenth1+=1;
 	
