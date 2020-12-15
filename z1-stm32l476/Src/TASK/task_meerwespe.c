@@ -74,6 +74,9 @@ extern void LedTimerCallback(void const * argument);
 extern uint8_t group_num_data;
 extern uint8_t  bbind_num;
 extern uint8_t task_flag_start;
+extern uint8_t send_group_num_buf[20];
+extern uint8_t send_wl_temp1[100][15];
+extern uint8_t devinfo_start_flag;
 void task_init(void)
 {
 
@@ -184,7 +187,7 @@ void task_init(void)
 		if(flag ==1){
 			
 			zdev_set.isMdev = save_nv_buf[1] -'0';
-			
+			memcpy(send_group_num_buf,&save_nv_buf[30],20);
 			//memcpy(zdev_set.rn_num,&save_nv_buf[10],6);
 			//memcpy(zdev_set.rd_num,&save_nv_buf[16],6);
 			//zdev_set.report_mesage_id = save_nv_buf[22] - '0'; 
@@ -194,8 +197,8 @@ void task_init(void)
 			get_nvram_id(addr_nv_buf);
 			for(i = 0;i<100;i++)
 			{
-				memcpy(&send_wl_temp[i][0],&addr_nv_buf[i*15],15);
-				printf("send_wl_temp %s \r\n",send_wl_temp[i]);
+				memcpy(&send_wl_temp1[i][0],&addr_nv_buf[i*15],15);
+				printf("send_wl_temp %s \r\n",send_wl_temp1[i]);
 			}
 			task_flag_start=1;
 			copy_addr_group();
@@ -206,6 +209,8 @@ void task_init(void)
 				
 			}
 			set_command_type(0xf1);
+			
+			devinfo_start_flag = 1;
 			//	aoa_at_handle_taskbegin("taskbegin0",10,1);
 		}	else{
 		    memset(save_nv_buf,0x00,70);

@@ -128,7 +128,10 @@ extern uint8_t bind_flag;
 
 
 
-
+void clear_bd_info(void)
+{
+	 memset(bd_info,0x00,sizeof(bd_info));
+}
 
 
 
@@ -159,6 +162,7 @@ uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index)
 }
 uint8_t bdinfo_count =0;
 extern uint8_t send_wl_temp[100][15];
+extern uint8_t send_wl_temp1[100][15];
 uint8_t bind_dev_version[6]="201126";
 
 uint8_t  copy_addr_group(void)
@@ -166,12 +170,12 @@ uint8_t  copy_addr_group(void)
    uint8_t i =0,count=0;
 		memset(bd_info,0x00,sizeof(bd_info));
 	for(i = 0;i<100;i++){
-		 if(send_wl_temp[i][0] !='1' ||send_wl_temp[i][14]==0){
+		 if(send_wl_temp1[i][0] !='1' ||send_wl_temp1[i][14]==0){
 					continue;
 		 }else{
-				memcpy(bd_info[count].addr,send_wl_temp[i],12);
+				memcpy(bd_info[count].addr,send_wl_temp1[i],12);
 				memcpy(bd_info[count].version_bd,bind_dev_version,6);
-				bd_info[count].num_group = send_wl_temp[i][13];
+				bd_info[count].num_group = send_wl_temp1[i][13];
 			  printf("bd_info[%d].addr %s \r\n",count,bd_info[count].addr);
 				count ++;
 		 }	
@@ -251,7 +255,7 @@ void ReportTimerCallback(void)
 		  report_once++;
 			report_count =0;
 	}else{
-	//	printf("sunmny  bd_info[%d].dis_status %d  %d  %d %d \r\n",report_count,bd_info[report_count].dis_status,bd_info[report_count].bat_soc,bd_info[report_count].lost_flag,report_once);
+		printf("sunmny  bd_info.addr:%s bd_info[%d].dis_status %d  %d %d %d \r\n",bd_info[report_count].addr, report_count,bd_info[report_count].dis_status,bd_info[report_count].bat_soc,bd_info[report_count].lost_flag,report_once);
 			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==1)&&(bd_info[report_count].dis_status ==0)){
 			
 					if(bd_info[report_count].bat_soc ==0)
@@ -458,7 +462,7 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 					lenth1+=2;
 					set_ble_red_light(0);
 			
-						for(i = 0; i<100 ;i++){
+					for(i = 0; i<100 ;i++){
 						if(send_wl_temp[i][14] == 0){
 						if(0 == memcmp(send_wl_temp[i],addr_buf,12)){
 									 send_wl_temp[i][14] =1;		

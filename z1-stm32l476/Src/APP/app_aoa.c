@@ -22,7 +22,7 @@ extern uint8_t save_nv_buf[70];
 #define BDEVICE_GROUP_NUM   10
 
 uint8_t DEVICE_ID_LEN = 12;
-
+uint8_t wlist_count =0;
 uint8_t bind_flag =0;
 uint8_t aoa_uart_data_loop[AOA_UART_DATA_LOOP_SIZE+1];
 extern osStatus task_aoauart_mail_put(uint8_t *data, uint16_t len);
@@ -119,7 +119,7 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_close_bdev_report(uint8_t *data, uint16_t len, uint8_t idx);
 void save_dev_addd_nv(void);
 extern uint8_t send_wl_temp[100][15];
-
+extern uint8_t save_flas;
 uint8_t task_flag_start =0;
 struct zdevice_setting zdev_set;
 uint8_t flag_airmod =0x00;
@@ -334,7 +334,7 @@ uint8_t first_bat_soc =0;
 
 uint8_t report_charing_soc(void)
 {
-	memcpy(report_charing_buf,"oharging:",9);
+	memcpy(report_charing_buf,"Charging:",9);
 	memset(bat_temp_buf,0x00,21);
 	
 	bat_temp_buf[0] =0x15;
@@ -1385,22 +1385,23 @@ uint8_t aoa_get_wlist_addr(uint8_t *data, uint16_t len, uint8_t idx)
 	
 
 }
-uint8_t wlist_count =0;
+
 uint8_t wlist_group_count =0;
 //AT+ZSAVEB=1,01,111234567890123##
 //+ZSAVEB:1,01,111234567890123,OK##
 uint8_t send_group_num_buf[20] = {0};
 
+uint8_t send_wl_temp1[100][15];
 uint8_t aoa_at_handle_zsaveb(uint8_t *data, uint16_t len, uint8_t idx) //test 
 {
 	    uint8_t lenth = 0,i =0,flag =0;
 			uint8_t back_buf[30];
 			lenth = strlen("AT+ZSAVEB=1,01,");
 	    memcpy(back_buf,&data[2],25);
-			memcpy(send_wl_temp[wlist_count],&data[lenth],12); 
-			send_wl_temp[wlist_count][13] = (data[12] - '0')*10 + (data[13] - '0');
+			memcpy(send_wl_temp1[wlist_count],&data[lenth],12); 
+			send_wl_temp1[wlist_count][13] = (data[12] - '0')*10 + (data[13] - '0');
 			for(i = 0;i<20;i++){
-		     if(send_group_num_buf[i]== send_wl_temp[wlist_count][13]){
+		     if(send_group_num_buf[i]== send_wl_temp1[wlist_count][13]){
 				  // MAX_GROUP_NUM = send_wl_temp[wlist_count][13];
 					 flag = 1;
 					 break;
@@ -1408,11 +1409,13 @@ uint8_t aoa_at_handle_zsaveb(uint8_t *data, uint16_t len, uint8_t idx) //test
 				 }
 			}
 			if(!flag){
-						send_group_num_buf[wlist_group_count] = send_wl_temp[wlist_count][13];
+						send_group_num_buf[wlist_group_count] = send_wl_temp1[wlist_count][13];
 						wlist_group_count++;
 			}
 			
-			send_wl_temp[wlist_count][12]  =  data[10] - '0';
+			send_wl_temp1[wlist_count][12]  =  data[10] - '0';
+			send_wl_temp1[wlist_count][14]  =  1;
+			printf("send_wl_temp1[wlist_count] = %s %d\r\n",send_wl_temp1[wlist_count],send_group_num_buf[wlist_count]);
 			
 			wlist_count ++;
 			bbind_num++;
@@ -1616,7 +1619,7 @@ void save_dev_addd_nv(void)
 		memset(addr_nv_buf,0x00,1500);
 	for(i = 0;i<100;i++)
 	{
-			memcpy(&addr_nv_buf[i*15],send_wl_temp[i],15);
+			memcpy(&addr_nv_buf[i*15],send_wl_temp1[i],15);
 	}
 	
 	taskENTER_CRITICAL();
@@ -1665,7 +1668,7 @@ uint8_t aoa_at_handle_airplanemode(uint8_t *data, uint16_t len, uint8_t idx)//аш
 		blebuf[lenth1] = ',';
 		lenth1 +=1;
 		if(zdev_set.other_id[0] == '1' &&zdev_set.other_id[1] == '0'){
-		memcpy(&blebuf[lenth1],zdev_set.other_id,12);
+		    memcpy(&blebuf[lenth1],zdev_set.other_id,12);
 		}
 		else
 		{
@@ -1705,7 +1708,7 @@ uint8_t aoa_at_handle_airplanemode(uint8_t *data, uint16_t len, uint8_t idx)//аш
 		//}
 		hw_bd1_close();
 		hw_bd2_close();
-		open_airmode =1;
+		
 		set_command_type(0xf2);
 	}else {
 		hw_bd1_open();
@@ -1896,7 +1899,8 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
 	//save_nv_buf[69] =  bbind_num;
 	
 	copy_addr_group();
-	
+	memcpy(&save_nv_buf[30],send_group_num_buf,20);
+	save_flas =1;
  
   set_command_type(0xf1);
 	if(!get_timer_status()){
@@ -2007,7 +2011,7 @@ void send_bbind_command(void)
 		   ble_send_response(commnd_buf, totallen1);	
 }
 uint8_t air_command_send_count =0;
-extern uint8_t save_flas;
+
 void send_airmode_command(void)
 {
 	uint8_t buf[30],flag =0;
@@ -2044,23 +2048,40 @@ void send_airmode_command(void)
 		group_location_count = lenth1;
 		
 		//get_bdev_group_num();
+		//printf("airmode blebuf %s \r\n",blebuf);
 		
-		
-			if(send_group_num_buf[air_command_send_count] !=0){
-	   blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
-			lenth1 +=1;
-			blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
-			lenth1 += 1;
-			air_command_send_count++;
+		if(send_group_num_buf[air_command_send_count] !=0){
+	       blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
+			   lenth1 +=1;
+			   blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
+			    lenth1 += 1;
+					
+		      memcpy(&blebuf[lenth1],"##",2);
+		      lenth1 +=2;
+		      ble_send_response(blebuf,lenth1);
+					printf("airmode blebuf %s \r\n",blebuf);
+			    air_command_send_count++;
 		}else {
-			task_send_count = 0;
-			set_command_type(0xff);
-			save_flas =1;
-			//blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
-		//	lenth1 +=1;
-		//	blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
-		//	lenth1 +=1;
-			//air_command_send_count++;
+				memcpy(&save_nv_buf[30],send_group_num_buf,20);
+				task_send_count = 0;
+				set_command_type(0xff);
+				air_command_send_count =0;
+			
+			 blebuf[lenth1] = '0';
+			   lenth1 +=1;
+			   blebuf[lenth1] = '0';
+			    lenth1 += 1;
+					
+		      memcpy(&blebuf[lenth1],"##",2);
+		      lenth1 +=2;
+		      ble_send_response(blebuf,lenth1);
+				save_flas =1;
+				open_airmode =1;
+				//blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
+			//	lenth1 +=1;
+			//	blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
+			//	lenth1 +=1;
+				//air_command_send_count++;
 		}
 		
 		//blebuf[lenth1] = air_command_send_count /10 + '0';
@@ -2068,14 +2089,12 @@ void send_airmode_command(void)
 		
 		//blebuf[lenth1] = air_command_send_count %10 +'0';
 		//lenth1 +=1;
-		
-		memcpy(&blebuf[lenth1],"##",2);
-		lenth1 +=2;
-		ble_send_response(blebuf,lenth1);
+	
 	
 }
 uint8_t ubind_command_count =0;
 extern uint8_t ubind_all_flag;
+
 void send_ubind_command(void)
 {
 			uint8_t response[50];
@@ -2112,35 +2131,42 @@ void send_ubind_command(void)
 			totallen +=1;
 			response[totallen] = send_group_num_buf[ubind_command_count]%10 +'0';
 			totallen += 1;
-			ubind_command_count++;
-		}else {
-			ubind_command_count = 0;
-			set_command_type(0xff);
-			
-						bbind_num= 0;
-						if(get_timer_status()){
-						osTimerStop(LedTimerHandle);
-						set_timer_status(0);
-						ubind_all_flag =1;
-						}
-			//blebuf[lenth1] = send_group_num_buf[air_command_send_count]/10 +'0';
-		//	lenth1 +=1;
-		//	blebuf[lenth1] = send_group_num_buf[air_command_send_count]%10 +'0';
-		//	lenth1 +=1;
-			//air_command_send_count++;
-		    }
-					//response[totallen] = ubind_command_count/10 + '0';
-					//totallen+=1;
-					//response[totallen] = ubind_command_count%10 + '0';
-					
-					//totallen+=1;
-					
-		       memcpy(&response[totallen],"##",2);
+			 memcpy(&response[totallen],"##",2);
 					
 					 totallen +=2;
 		
 				  ble_send_response(response, totallen);
 					printf("ubind send ble :%s \r\n",response);
+			ubind_command_count++;
+		}else {
+			     ubind_command_count = 0;
+			     set_command_type(0xff);
+			     memset(send_group_num_buf,0x00,20);
+			      memset(send_wl_temp1,0x00,1500);
+					//memset(bd_info,0x00,sizeof(bd_info));
+			clear_bd_info();
+						bbind_num= 0;
+						wlist_count = 0;
+				wlist_group_count = 0;
+			 response[totallen] = '0';
+			totallen +=1;
+			response[totallen] =  '0';
+			totallen += 1;
+					 memcpy(&response[totallen],"##",2);
+					
+					 totallen +=2;
+		
+				  ble_send_response(response, totallen);
+						if(get_timer_status()){
+						osTimerStop(LedTimerHandle);
+						set_timer_status(0);
+						ubind_all_flag =1;
+						}
+		
+		    }
+		
+					
+		      
 							
 
 }
@@ -2583,10 +2609,10 @@ printf("aoa_at_handle_bunbind \r\n");
 						 
 		
 							for(i =0 ;i<100;i++){
-								printf("send_wl_temp %s  \r\n",send_wl_temp[i]);
-										if(0 == memcmp(unbind_id_buf,send_wl_temp[i],12)){
-												printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp[i]);
-													memset(send_wl_temp[i],0x00,15);
+								printf("send_wl_temp %s  \r\n",send_wl_temp1[i]);
+										if(0 == memcmp(unbind_id_buf,send_wl_temp1[i],12)){
+												printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[i]);
+													memset(send_wl_temp1[i],0x00,15);
 											if(bbind_num >= 1)
 												   bbind_num-=1;
 										}
@@ -2654,10 +2680,10 @@ printf("aoa_at_handle_bunbind \r\n");
 						
 					
 							for(i =0 ;i<100;i++){
-										printf("send_wl_temp %s  \r\n",send_wl_temp[i]);
-										if(0 == memcmp(unbind_id_buf,&send_wl_temp[i][0],12)){
-											printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp[i]);
-													memset(send_wl_temp[i],0x00,15);
+										printf("send_wl_temp %s  \r\n",send_wl_temp1[i]);
+										if(0 == memcmp(unbind_id_buf,&send_wl_temp1[i][0],12)){
+											printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[i]);
+													memset(send_wl_temp1[i],0x00,15);
 												if(bbind_num >= 1)
 													   bbind_num-=1;
 										}
