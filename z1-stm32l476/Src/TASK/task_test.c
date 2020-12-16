@@ -431,7 +431,7 @@ void mytestTask1(void const * argument)
 			}
 
 		if(send_count_flag == 60){
-			//	aoa_at_handle_bbeatnow();
+				aoa_at_handle_bbeatnow();
 			//task_gps_message_put(0x02);
 		}
 		if(send_count_flag == 80){
@@ -441,10 +441,10 @@ void mytestTask1(void const * argument)
 		if(send_count_flag == 13){
 			rn_receive_and_handle();
 			}
-		if(send_count_flag == 100){
-			//aoa_at_handle_zlocation();
+		if(send_count_flag == 200){
+			aoa_at_handle_zlocation();
 			send_count_flag =0;
-			//BatTimerCallback();
+			BatTimerCallback();
 		}else{
 			send_count_flag ++;
 		}

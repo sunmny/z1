@@ -368,7 +368,7 @@ uint8_t report_charing_soc(void)
 			bat_temp_buf[5] = zdev_set.zbat_soc <<4 | zdev_set.zbat_soc1 ;
 	}else{
 
-		bat_temp_buf[5] = zdev_set.zbat_soc <<4 | 0x0f;
+		  bat_temp_buf[5] = zdev_set.zbat_soc <<4 | 0x0f;
 	}
 
 	bat_temp_buf[20] = zdev_set.bat_chr_status << 4  | zdev_set.bat1_chr_status;
@@ -379,8 +379,8 @@ uint8_t report_charing_soc(void)
 	zdev_set.zbat_soc_bak = zdev_set.zbat_soc;
 	zdev_set.zbat_soc1_bak = zdev_set.zbat_soc1;
 	
-	//if(0== task_flag_start)
-		//	ble_send_response(report_charing_buf,32);
+	if(0== task_flag_start)
+			ble_send_response(report_charing_buf,32);
 }
 extern uint8_t version_info[10];
 uint8_t aoa_at_handle_bbeatnow(void)

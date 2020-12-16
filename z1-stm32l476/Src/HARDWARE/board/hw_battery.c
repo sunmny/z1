@@ -128,9 +128,9 @@ uint8_t set_val_to_report(void)
 					zdev_set.zbat_soc =1;
 		else if(bat_val1 <0x2c){
 					zdev_set.zbat_soc =0;
-					app_power_open();
+					app_power_close();
 		}
-		printf("zdev_set.zbat_soc = %x bat_val1 = %x\r\n",bat_zdev_soc,bat_val1);
+		
 	}else{
 	
 	
@@ -146,13 +146,13 @@ uint8_t set_val_to_report(void)
 					zdev_set.zbat_soc =1;
 		else if(bat_zdev_soc <= 5){
 					zdev_set.zbat_soc =0;
-						app_power_open();
+						app_power_close();
 		}
-			return 0;
+			//return 0;
 	}
-	printf("bat_zdev_soc = %x \r\n",bat_zdev_soc);
+	
 }
-			
+	printf("zdev_set.zbat_soc = %x \r\n",zdev_set.zbat_soc);		
 }
 uint8_t bat1_val2=0xff,bat1_val3;
 void zdev_read_battery1_adc(void)
@@ -210,10 +210,10 @@ uint8_t set_val1_to_report(void)
 		else if(bat_bd_soc <= 5)
 					zdev_set.zbat_soc1 =0;
 //		printf("zdev_set.zbat_soc1  = %d bat_bd_soc = %d\r\n",zdev_set.zbat_soc1,bat_bd_soc);
-		return 0;
+		//return 0;
 	}
 }
-		
+	printf("zdev_set.zbat_soc1 = %x \r\n",zdev_set.zbat_soc1);		
 }
 uint8_t cw_write_9523(uint8_t point_reg,uint8_t w_pdata)
 {
