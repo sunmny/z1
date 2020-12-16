@@ -188,6 +188,7 @@ void task_init(void)
 			
 			zdev_set.isMdev = save_nv_buf[1] -'0';
 			memcpy(send_group_num_buf,&save_nv_buf[30],20);
+			memcpy(zdev_set.other_id,&save_nv_buf[10],12);
 			//memcpy(zdev_set.rn_num,&save_nv_buf[10],6);
 			//memcpy(zdev_set.rd_num,&save_nv_buf[16],6);
 			//zdev_set.report_mesage_id = save_nv_buf[22] - '0'; 
