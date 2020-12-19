@@ -183,10 +183,10 @@ void task_init(void)
 		get_nvram_save_data(save_nv_buf);
 			printf("save_nv_buf %s\r\n",save_nv_buf);
 		flag = save_nv_buf[0] -'0';
-	printf("get nv flag = %d \r\n",flag);
+   	printf("get nv flag = %d \r\n",flag);
 		if(flag ==1){
 			
-			zdev_set.isMdev = save_nv_buf[1] -'0';
+			zdev_set.isMdev = save_nv_buf[1];
 			memcpy(send_group_num_buf,&save_nv_buf[30],20);
 			memcpy(zdev_set.other_id,&save_nv_buf[10],12);
 			//memcpy(zdev_set.rn_num,&save_nv_buf[10],6);

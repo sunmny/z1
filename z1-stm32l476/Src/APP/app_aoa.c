@@ -381,7 +381,7 @@ uint8_t report_charing_soc(void)
 	zdev_set.zbat_soc_bak = zdev_set.zbat_soc;
 	zdev_set.zbat_soc1_bak = zdev_set.zbat_soc1;
 	
-	if(0== task_flag_start)
+	if(0 == task_flag_start)
 			ble_send_response(report_charing_buf,32);
 }
 extern uint8_t version_info[10];
@@ -1266,7 +1266,7 @@ uint8_t aoa_at_handle_zbind(uint8_t *data, uint16_t len, uint8_t idx)
 	uint8_t ret;
 	uint8_t response[64];
 	
-	
+	//task_flag_start =1;
 		//zdev_set.zdev_num = 1;//get_zdevice_num(data,len,idx);
 	
 	//get_zdev_id(data,len,idx);
@@ -1296,40 +1296,40 @@ uint8_t aoa_at_handle_zcall(uint8_t *data, uint16_t len, uint8_t idx)
 	uint16_t totallen;
 	
 	uint8_t buf[12];
-		uint8_t zcall_response[64];
+		//uint8_t zcall_response[64];
 	memcpy(buf,"versionget##",12);
 	
 	ble_send_response(buf,12);
-	
-  printf("bleisok = %d \r\n",bleisok);
-	if(bleisok == 0){
-			memcpy(zcall_response,"+ZCALL:ERROR",12);
-			memcpy(&zcall_response[12],"##",4);
-		aoa_send_response(zcall_response, 16);
-	}else{
+	//osDelay(1000);
+  //printf("bleisok = %d \r\n",bleisok);
+	//if(bleisok == 0){
+		//	memcpy(zcall_response,"+ZCALL:ERROR",12);
+		//	memcpy(&zcall_response[12],"##",4);
+		//aoa_send_response(zcall_response, 16);
+	//}else{
 			
 	
-			totallen = strlen("+ZCALL:");
+			//totallen = strlen("+ZCALL:");
 		
-			memcpy(zcall_response,"+ZCALL:",totallen);
-			memcpy(&zcall_response[totallen],gsn_buf,12);			
-			memcpy(zdev_set.mydev_id,gsn_buf,12);
-			totallen +=12;
-			memcpy(&zcall_response[totallen],",OK",3);
-			totallen +=3;
+		//	memcpy(zcall_response,"+ZCALL:",totallen);
+			////memcpy(&zcall_response[totallen],gsn_buf,12);			
+			//memcpy(zdev_set.mydev_id,gsn_buf,12);
+			//totallen +=12;
+			//memcpy(&zcall_response[totallen],",OK",3);
+			//totallen +=3;
 		   
 		 // zcall_lenth = totallen;
 			//memcpy(&buf[lenth1],"20",2);
 			//lenth1 +=2;
 			//memcpy(&zcall_response[totallen],version_info,8);
 			//totallen +=8;
-			memcpy(&zcall_response[totallen],"##",2);
-			totallen +=2;
-	   	printf("zcall buf is %s \r\n",buf);
+			//memcpy(&zcall_response[totallen],"##",2);
+			//totallen +=2;
+	   //	printf("zcall buf is %s \r\n",buf);
 		   zdev_isbind = 1;
-		aoa_send_response(zcall_response, totallen);
+		//aoa_send_response(zcall_response, totallen);
 		
-	}
+	//}
 
 
 
@@ -1651,12 +1651,8 @@ uint8_t aoa_at_handle_airplanemode(uint8_t *data, uint16_t len, uint8_t idx)//需
 	 // save_nv_buf[2]=zdev_set.report_dis+'0';
 	 // save_nv_buf[3]=zdev_set.report_bat_threshold+'0';
 	
-		if(zdev_set.isMdev ==1){
-			save_nv_buf[1] = '1';
-		}else{
-			save_nv_buf[1] = '0';
-		}
-				save_nv_buf[0] = '1';
+
+				//save_nv_buf[0] = '1';
 		//set_nvram_save_data(save_nv_buf);
 		
 	memcpy(buf,"+AIRPLANEMODE:ON,OK##\r\n",25);
@@ -1886,16 +1882,14 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
 {
 	
 	
-	
+	devinfo_flag =0;
 	task_flag_start =1;
 	contiue_task =1;
 	
 	save_nv_buf[0] = '1';
-	if(zdev_set.isMdev ==1){
-		save_nv_buf[1] = '1';
-	}else if(zdev_set.isMdev ==0 ){
-		save_nv_buf[1] = '0';
-	}
+	
+		save_nv_buf[1] = zdev_set.isMdev ;
+
 	
 	//get_bdev_group_num();
 	//save_nv_buf[69] =  bbind_num;
@@ -1980,7 +1974,7 @@ void send_bbind_command(void)
 	totallen1 +=1;
 	
 		
-		commnd_buf[totallen1] = taskidnum + '0';
+		commnd_buf[totallen1] = '1';
 			
 			totallen1 +=1;
 	
@@ -2224,11 +2218,13 @@ void send_ubind_command(void)
 					 totallen +=2;
 		
 				  ble_send_response(response, totallen);
-			task_flag_start = 0;
+			    task_flag_start = 0;
 						if(get_timer_status()){
 						osTimerStop(LedTimerHandle);
 						set_timer_status(0);
 						ubind_all_flag =1;
+							//memset(save_nv_buf,0x00,70);
+							
 						}
 		
 		    }
@@ -2254,10 +2250,10 @@ uint8_t cmd;
 	 }
 	 if(send_light_commnd ==1){
 				set_command_type(0xff);
-				call_flag++;
+				call_flag=1;
 	 }else if(send_light_commnd ==2){
 					set_command_type(0xff);
-					call_flag++;
+					call_flag=1;
 	 }
 	 cmd = get_command_type();
 	printf("LedTimerCallback cmd = %x \r\n",cmd);
@@ -2326,6 +2322,8 @@ uint8_t new_dev = 0;
 
 extern uint8_t send_wl_temp[100][15];
 extern uint8_t devinfo_start_flag;
+extern uint8_t devinfo_flag;
+uint8_t bbind_back_dev_buf[12];
 // bbind=1,2,2,223456,000000000000,109988998889##
 uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 {
@@ -2342,7 +2340,9 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 	devinfo_start_flag =0;
 	if(bbind_num >100)
 		return 0;
-	
+	if(task_flag_start ==0){
+		set_command_type(0xff);
+	}
 		if(task_flag_start && get_timer_status()){
 	    osTimerStop(LedTimerHandle);
 			set_timer_status(0);
@@ -2350,7 +2350,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 		}
 		
 	  zdev_bind_flag =1 ;
-		save_nv_buf[1] = '1';
+	//	save_nv_buf[1] = '1';
 	memset(apn_buf,0x00,50);
 	memcpy(backup_buf,data,len);
 	hw_bd2_close();
@@ -2373,7 +2373,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 					memcpy(&bdadd_buf[lenth1],&data[count+1],12);
 						
 					memcpy(devid_buf,&data[count+1],12);
-					
+					memcpy(bbind_back_dev_buf,devid_buf,12);
 						lenth1 +=12;
 					
 					taskidnum = data[count-1] - '0';
@@ -2393,7 +2393,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 					memcpy(bdadd_buf,"bbind:",lenth1);
 					memcpy(&bdadd_buf[lenth1],&data[count+1],12);
 					memcpy(devid_buf,&data[count+1],12);
-				
+				memcpy(bbind_back_dev_buf,devid_buf,12);
 					lenth1 +=12;
 					taskidnum = data[count-1] - '0';
 				 // send_wl_temp[bbind_num][12] = taskidnum; 
@@ -2551,9 +2551,7 @@ if(task_flag_start &&(!get_timer_status())){
 	  set_timer_status(1);
 	
 }
-	if(task_flag_start){
-		set_command_type(0xf1);
-	}
+
 	memset(backbuf,0x00,40);
 	memcpy(backbuf,"+BBIND:",7);
 	memcpy(&backbuf[7],&data[9],14);
@@ -2562,10 +2560,14 @@ if(task_flag_start &&(!get_timer_status())){
 	memcpy(&backbuf[23],",OK",3);	
 	memcpy(&backbuf[26],aoa_at_end_tok,AT_END_TOK_LEN);	
  
+
+	if(task_flag_start){
+		set_command_type(0xf1);
+	}
 	if(task_flag_start)
 			devinfo_start_flag =1;
 	
-	printf("bbind send_buf %s %d\r\n",bdadd_buf,lenth1);
+	printf("bbind send_buf %s %d\r\n",bdadd_buf,task_flag_start);
 	
 }
  
@@ -2619,7 +2621,7 @@ printf("aoa_at_handle_bunbind \r\n");
  					save_nv_buf[0] = '0';
 					//set_nvram_save_data(save_nv_buf);
 					ubind_flag = 0;
-					clear_dev_nv();
+					//clear_dev_nv();
 					memset(send_wl_temp,0x00,1500);
 					set_command_type(0xf3);
 					//bbind_num =0;
@@ -2932,6 +2934,8 @@ uint8_t aoa_at_handle_bbbeat(uint8_t *data, uint16_t len, uint8_t idx)
 	ret=task_ble_mail_put(data, len);
 	return ((uint8_t)(ret));
 }
+uint8_t light_response[60];
+uint8_t light_back_len =0;
 
 uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 {
@@ -2941,7 +2945,7 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 	
 	uint16_t totallen=0,lenth=0,lenth1 = 0;
 	uint8_t id1,id2;
-	uint8_t response[128];
+	//uint8_t response[60];
 	uint8_t call_buf[25];
 	
 	
@@ -2952,10 +2956,10 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 	memcpy(call_buf,"call:",5);
 	
 	lenth1=strlen("+BLIGHT:");
-	memcpy(response,"+BLIGHT:",lenth1);
+	memcpy(light_response,"+BLIGHT:",lenth1);
 	totallen+=lenth1;
 	
-	memcpy(&response[totallen],&data[lenth],15);
+	memcpy(&light_response[totallen],&data[lenth],15);
 	totallen +=15;
 	
 	
@@ -2972,7 +2976,7 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 	if(data[26] == 'N'){
 		 memcpy(&call_buf[21],"01",2);	
 		light_flag = 1;
-			memcpy(&response[totallen],"ON",2);
+			memcpy(&light_response[totallen],"ON",2);
 	totallen +=2;
 			send_light_commnd=1;
 	}
@@ -2980,24 +2984,32 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 			light_flag = 0;
 			send_light_commnd=2;
 		 memcpy(&call_buf[21],"00",2);	
-			memcpy(&response[totallen],"OFF",3);
+			memcpy(&light_response[totallen],"OFF",3);
 	totallen +=3;
 	}
 	
 	  memcpy(&call_buf[23],"##",2);	
+	if(get_timer_status()){
+				 osTimerStop(LedTimerHandle);
+					set_timer_status(0);
+	}
 		ble_send_response(call_buf,24);
+	if(!get_timer_status()){
+				 osTimerStart(LedTimerHandle, 3500);
+					set_timer_status(1);
+	}
 	
-		memcpy(&response[totallen],",",1);
+		memcpy(&light_response[totallen],",",1);
 	totallen +=1;
 	
-	memcpy(&response[totallen],"OK",2);
+	memcpy(&light_response[totallen],"OK",2);
 	totallen +=2;
 	
-	memcpy(&response[totallen],aoa_at_end_tok,AT_END_TOK_LEN);
+	memcpy(&light_response[totallen],aoa_at_end_tok,AT_END_TOK_LEN);
 	totallen+=AT_END_TOK_LEN;
-	
-	ret = aoa_send_response(response,totallen);
-	return ((uint8_t)(ret));
+	light_back_len = totallen;
+	//ret = aoa_send_response(response,totallen);
+	return 0;
 }
 
 uint8_t aoa_at_handle_binfoerase(uint8_t *data, uint16_t len, uint8_t idx) //need to 2640

@@ -444,7 +444,7 @@ void mytestTask1(void const * argument)
 		if(send_count_flag == 200){
 			aoa_at_handle_zlocation();
 			send_count_flag =0;
-			BatTimerCallback();
+		//	BatTimerCallback();
 		}else{
 			send_count_flag ++;
 		}
@@ -452,7 +452,7 @@ void mytestTask1(void const * argument)
 		}else{
 				if(send_count_flag == 100){
 			send_count_flag =0;
-			BatTimerCallback();
+			//BatTimerCallback();
 		}else{
 				send_count_flag ++;
 		}

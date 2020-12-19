@@ -85,6 +85,8 @@ uint8_t ble_open_lock_back(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_airplanmode_handle(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_set_bleaddr(uint8_t *data, uint16_t len, uint8_t at_index);
+uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index);
+
 typedef enum{
 	BDINFO =0,
 	VERSION,
@@ -93,7 +95,7 @@ typedef enum{
 	bbind,
 	UBIND,
 	airplanmode,
-	BPALERT,
+	call,
 	BDADDR1,
 	subind,
 	FTCN,
@@ -112,7 +114,7 @@ static const ble_at_symbol ble_uart_at_table[BLE_SUPPORT_UART_AT_NUM] = {
 	{ble_at_handle,(uint8_t *)"bbind:"},	
 	{ble_at_handle,(uint8_t *)"ubind:"},
   {ble_airplanmode_handle,(uint8_t *)"airplanemode:"},
-	{ble_at_handle,(uint8_t *)"+BPALERT:"},
+	{ble_at_handle_call,(uint8_t *)"call:"},
 	{ble_at_handle1,(uint8_t *)"+BDADDR1:"},
 	{ble_open_lock_back,(uint8_t *)"subind:"},
 	{ble_uart_at_handle_ble_connect, (uint8_t *)"FTCN##"},
@@ -149,14 +151,70 @@ uint8_t ble_set_bleaddr(uint8_t *data, uint16_t len, uint8_t at_index)
 		else
 			bleisok =0;
 }
-
+extern uint8_t light_response[60];
+extern uint8_t light_back_len;
+uint8_t light_back_buf_bak[50];
+extern uint8_t send_light_commnd;
+uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index)
+{
+//call:132011260038,01,01,LED on ok##            2640回复的开启LED完整数据格式
+//call:132011260038,01,01,LED off ok##           2640回复的关闭LED完整数据格式
+	uint8_t call_dev_buf[12];
+	uint8_t i,lenth=0;
+	lenth = strlen("call:");
+	
+   if(0 == memcmp(light_back_buf_bak,data,len))
+			return 0 ;
+	memcpy(call_dev_buf,&data[lenth],12);
+	 for(i =0;i<len;i++){
+			if(data[i] =='#'&&data[i+1] == '#'){
+				if(data[i-2] == 'o' && data[i-1] == 'k'){
+				if(0 == memcmp(call_dev_buf,&light_response[10],12)){
+							send_light_commnd =0;
+					     aoa_send_response(light_response, light_back_len);
+					break;
+				}
+				}
+			
+			}
+	 
+	 
+	 }
+	 
+	 
+	 
+	 
+	  memcpy(light_back_buf_bak,data,len);
+		//aoa_send_response(data, len);
+	return 0;
+}
 uint8_t version_info[10]="20";
 
 uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index)
 {
-		uint8_t lenth =0;
+		uint8_t lenth =0,totallen ;
+		uint8_t zcall_response[70];
 	  lenth = strlen("versionget:");
 	 	 memcpy(&version_info[2],&data[lenth],6);
+	
+		
+			totallen = strlen("+ZCALL:");
+		
+			memcpy(zcall_response,"+ZCALL:",totallen);
+		memcpy(&zcall_response[totallen],gsn_buf,12);			
+			memcpy(zdev_set.mydev_id,gsn_buf,12);
+			totallen +=12;
+			memcpy(&zcall_response[totallen],",OK",3);
+			totallen +=3;
+		   
+
+			//memcpy(&zcall_response[totallen],version_info,8);
+		//	totallen +=8;
+			memcpy(&zcall_response[totallen],"##",2);
+			totallen +=2;
+	   	printf("zcall buf is %s \r\n",zcall_response);
+		   //zdev_isbind = 1;
+		aoa_send_response(zcall_response, totallen);
 	  
 		
 }
@@ -320,18 +378,19 @@ void devinfo_report_task(void const * argument)
 {
 
 		while(1){
-				osDelay(100);	
-			if(devinfo_start_flag)
-				ReportTimerCallback();
+				osDelay(100);
+				printf("start_flag %d %d  \r\n",devinfo_start_flag,task_flag_start);
+			if(devinfo_start_flag && task_flag_start)
+				     ReportTimerCallback();
 			if(uart_2640_flag ==0){
 				uart_2640_flag_count ++;
 				if((uart_2640_flag_count>30)){
 					printf("not receive from 2640 \r\n");
-				if(bleisok ==1){
+				
 				set_ble_power_off();
 				osDelay(100);
 				set_ble_power();
-				}					
+							
 				uart_2640_flag_count = 0;
 				}
 			}else{
@@ -393,6 +452,7 @@ extern uint8_t scan_begin_flag;
 uint8_t bind_bak_buf[50];
 extern uint8_t bbind_num;
 extern uint8_t save_nv_buf[70];
+extern uint8_t bbind_back_dev_buf[12];
 void ble_bind_back(uint8_t *data,uint8_t len)
 {
 	uint8_t lenth ,lenth1,lenth2,count=0,count1 =0;
@@ -461,21 +521,12 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 					memcpy(&buf[lenth1],"OK",2);
 					lenth1+=2;
 					set_ble_red_light(0);
-			
-					for(i = 0; i<100 ;i++){
-						if(send_wl_temp[i][14] == 0){
-						if(0 == memcmp(send_wl_temp[i],addr_buf,12)){
-									 send_wl_temp[i][14] =1;		
-									}
-							}else{
-									continue ;
-								
-							}
-						}
+		
 						memcpy(&buf[lenth1],aoa_at_end_tok,4);
 						lenth1 +=4;
 					printf("bind buf back %s \r\n",buf);
 					memcpy(bind_bak_buf,data,len);
+				if(0 == memcmp(bbind_back_dev_buf,addr_buf,12))
 					aoa_send_response(buf, lenth1);
 					
 //						set_nvram_save_data(save_nv_buf);
