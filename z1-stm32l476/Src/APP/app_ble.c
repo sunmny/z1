@@ -53,7 +53,7 @@ uint8_t rd_buf[16] = {0x24,0x43,0x43,0x49,0x43,0x41,0x2C,0x30,0x2C,0x30,0x30,0x2
 //uint8_t mzdev_add[12];
 struct bdevice_status ft_dev;
 extern uint8_t gsn_buf[12];
-
+uint8_t holdtask_flag =0;
 
 /***********************test mode*************************/
 uint8_t ble_uart_at_handle_rd(uint8_t *data, uint16_t len, uint8_t idx);
@@ -86,7 +86,8 @@ uint8_t ble_airplanmode_handle(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_versionget_handle(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_set_bleaddr(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index);
-
+uint8_t ble_at_hold_task(uint8_t *data, uint16_t len, uint8_t at_index);
+uint8_t ble_at_start_task(uint8_t *data, uint16_t len, uint8_t at_index);
 typedef enum{
 	BDINFO =0,
 	VERSION,
@@ -96,7 +97,7 @@ typedef enum{
 	UBIND,
 	airplanmode,
 	call,
-	BDADDR1,
+	hold,
 	subind,
 	FTCN,
 	GMID,
@@ -115,9 +116,9 @@ static const ble_at_symbol ble_uart_at_table[BLE_SUPPORT_UART_AT_NUM] = {
 	{ble_at_handle,(uint8_t *)"ubind:"},
   {ble_airplanmode_handle,(uint8_t *)"airplanemode:"},
 	{ble_at_handle_call,(uint8_t *)"call:"},
-	{ble_at_handle1,(uint8_t *)"+BDADDR1:"},
+	{ble_at_hold_task,(uint8_t *)"HoldTask"},
 	{ble_open_lock_back,(uint8_t *)"subind:"},
-	{ble_uart_at_handle_ble_connect, (uint8_t *)"FTCN##"},
+	{ble_at_start_task, (uint8_t *)"hello"},
 	{ble_uart_at_handle_ble_getmid, (uint8_t *)"GMID##"},
 	{ble_uart_at_handle_write_sn, (uint8_t *)"FTSN"},
 	{ble_uart_at_handle_reset_back_data, (uint8_t *)"FTXX##"},
@@ -187,6 +188,27 @@ uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index)
 	  memcpy(light_back_buf_bak,data,len);
 		//aoa_send_response(data, len);
 	return 0;
+}
+
+uint8_t ble_at_hold_task(uint8_t *data, uint16_t len, uint8_t at_index)
+{
+
+		holdtask_flag = 1;
+	  set_command_type(0xff);
+
+
+
+}
+uint8_t ble_at_start_task(uint8_t *data, uint16_t len, uint8_t at_index)
+{
+		if(holdtask_flag ==1){		
+		   set_command_type(0xf1);
+			holdtask_flag =0;
+		}
+
+
+
+
 }
 uint8_t version_info[10]="20";
 
@@ -274,8 +296,9 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 					if(data[i] == 'd'){
 						if(memcmp(&data[i],"devinfo:",8) ==0){
 								group_num = (data[i+lenth+13] - '0')*10 + (data[i+lenth+14] - '0');
-							//printf("sunmny name %d  %d \r\n",i,group_num);
+							  printf("devinfo groupnum %d  %d \r\n",i,group_num);
 								for(j =0;j<100;j++){
+									 printf("devinfo dev gnu %d  \r\n",i,bd_info[j].num_group);
 									if(bd_info[j].num_group == group_num){
 										
 										if(memcmp(bd_info[j].addr,&data[i+lenth],12) == 0){
@@ -284,7 +307,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 							
 											bd_info[j].bat_soc = (data[i+lenth+19] - '0' )*10 + (data[i+lenth+20] - '0' );
 											bd_info[j].lost_flag = 1;
-											//printf("sunmny  bd_info[j].dis_status %d  %d  %d\r\n",bd_info[j].dis_status,bd_info[j].bat_soc,bd_info[j].lost_flag);
+											printf("devinfo  bd_info[j].dis_status %d  %d  %d\r\n",bd_info[j].dis_status,bd_info[j].bat_soc,bd_info[j].lost_flag);
 						}				
 						
 				}else{
@@ -619,22 +642,7 @@ uint8_t ble_at_handle(uint8_t *data, uint16_t len, uint8_t at_index)
 uint8_t ble_at_handle1(uint8_t *data, uint16_t len, uint8_t at_index)
 {
 
-		uint8_t lenth ,lenth1;
-	//uint8_t buf[30];
-//		uint8_t gsn_buf[12] ={0};
-		uint8_t send_buf[20];
-		lenth =	strlen("+BDADDR1:");
-	if(data[lenth]!='1' && data[lenth+1]!='0'){
-		get_nvram_sn(gsn_buf);
-		//osDelay(2000);
-		memcpy(send_buf,"GMID",4);
-		memcpy(&send_buf[4],gsn_buf,12);
-		memcpy(&send_buf[16],"##",2);
-		printf("sn send_buf = %s \r\n",send_buf);
-		//osDelay(500);
-		ble_send_response(send_buf,18);
-	}
-		
+
 					
 
 }
