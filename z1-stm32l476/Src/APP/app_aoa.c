@@ -2572,7 +2572,7 @@ if(task_flag_start &&(!get_timer_status())){
 }
  
 uint8_t ubind_back[50];
-uint8_t ubind_back_err[50];
+//uint8_t ubind_back_err[50];
 uint8_t ubind_len =0;
 uint8_t ubind_len_err =0;
 extern uint8_t send_wl_temp[100][15];
@@ -2581,11 +2581,12 @@ extern uint8_t sendid_count;
 //uint8_t response_ubind[32];
 extern uint8_t bind_bak_buf[50];
 extern uint8_t devinfo_start_flag ;
+uint8_t unbind_id_buf[12];
 uint8_t aoa_at_handle_bunbind(uint8_t *data, uint16_t len, uint8_t idx)
 {
 	uint16_t totallen = 0,lenth,i,totallen_bak;
 	uint8_t response[52];
-	uint8_t unbind_id_buf[12];
+	
 	
 
 
@@ -2678,30 +2679,42 @@ printf("aoa_at_handle_bunbind \r\n");
 						
 						 
 		
-							for(i =0 ;i<100;i++){
-								printf("send_wl_temp %s  \r\n",send_wl_temp1[i]);
-										if(0 == memcmp(unbind_id_buf,send_wl_temp1[i],12)){
-												printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[i]);
-													memset(send_wl_temp1[i],0x00,15);
-											if(bbind_num >= 1)
-												   bbind_num-=1;
-										}
+						//	for(i =0 ;i<100;i++){
+							//	printf("send_wl_temp %s  \r\n",send_wl_temp1[i]);
+									//	if(0 == memcmp(unbind_id_buf,send_wl_temp1[i],12)){
+											//	printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[i]);
+												//	memset(send_wl_temp1[i],0x00,15);
+										//	if(bbind_num >= 1)
+												 //  bbind_num-=1;
+									//	}
 										
 							
-							}
+						//	}
 							
 		//					save_dev_addd_nv();
 					}
-						if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
+					//	if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
+				    if(bbind_num ==0)
 							set_ble_red_light(1);
 						
 						ubind_flag = 1;
 //						save_dev_addd_nv();
 						
-						copy_addr_group();
+						
 						
 					//if(zdev_set.isMdev ==1)
-					ble_send_response(response, totallen);
+							if(get_timer_status()){
+				 osTimerStop(LedTimerHandle);
+					set_timer_status(0);
+	}
+		//ble_send_response(call_buf,24);
+	ble_send_response(response, totallen);
+	if(!get_timer_status()){
+				 osTimerStart(LedTimerHandle, 3500);
+					set_timer_status(1);
+	}
+	
+					
 						printf("subind1  %s  \r\n",response);
 		
 			break;
@@ -2749,27 +2762,40 @@ printf("aoa_at_handle_bunbind \r\n");
 					
 						
 					
-							for(i =0 ;i<100;i++){
-										printf("send_wl_temp %s  \r\n",send_wl_temp1[i]);
-										if(0 == memcmp(unbind_id_buf,&send_wl_temp1[i][0],12)){
-											printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[i]);
-													memset(send_wl_temp1[i],0x00,15);
-												if(bbind_num >= 1)
-													   bbind_num-=1;
-										}
+							//for(i =0 ;i<100;i++){
+									//	printf("send_wl_temp %s  \r\n",send_wl_temp1[i]);
+									//	if(0 == memcmp(unbind_id_buf,&send_wl_temp1[i][0],12)){
+										//	printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[i]);
+											//		memset(send_wl_temp1[i],0x00,15);
+											//	if(bbind_num >= 1)
+												//	   bbind_num-=1;
+									//	}
 							
-							}
+						//	}
 //							save_dev_addd_nv();
 					}
 					printf("response is %s \r\n",response);
-					if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
-							set_ble_red_light(1);
+				//	if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
+					if(bbind_num ==0) 
+					  set_ble_red_light(1);
 					
 					ubind_flag = 2;
 					//if(zdev_set.isMdev ==1)
-					copy_addr_group();
+				//	copy_addr_group();
 					
-					ble_send_response(response, totallen);
+					//ble_send_response(response, totallen);
+					if(get_timer_status()){
+				 osTimerStop(LedTimerHandle);
+					set_timer_status(0);
+	}
+		//ble_send_response(call_buf,24);
+	ble_send_response(response, totallen);
+	if(!get_timer_status()){
+				 osTimerStart(LedTimerHandle, 3500);
+					set_timer_status(1);
+	}
+	
+					
 					printf("subind2  %s  \r\n",response);
 			break;
 				
@@ -2809,14 +2835,14 @@ printf("aoa_at_handle_bunbind \r\n");
 		memcpy(&ubind_back[len-6],",OK",3);
 		memcpy(&ubind_back[len-3],aoa_at_end_tok,AT_END_TOK_LEN);
 		ubind_len =len+1;
-	  aoa_send_response(ubind_back,ubind_len);
-		printf("ubind_back  %s  \r\n",ubind_back);
+	 // aoa_send_response(ubind_back,ubind_len);
+		//printf("ubind_back  %s  \r\n",ubind_back);
 	
-		memcpy(ubind_back_err,"+BUNBIND:",9);
-		memcpy(&ubind_back_err[9],&data[lenth],len-15);
-		memcpy(&ubind_back_err[len-6],",ERROR,1",8);
-		memcpy(&ubind_back_err[len+2],aoa_at_end_tok,AT_END_TOK_LEN);
-		ubind_len_err =len+6;
+		//memcpy(ubind_back_err,"+BUNBIND:",9);
+	//	memcpy(&ubind_back_err[9],&data[lenth],len-15);
+		//memcpy(&ubind_back_err[len-6],",ERROR,1",8);
+		//memcpy(&ubind_back_err[len+2],aoa_at_end_tok,AT_END_TOK_LEN);
+		//ubind_len_err =len+6;
 	//aoa_send_response(ubind_back_err,ubind_len_err);
 	
 	}

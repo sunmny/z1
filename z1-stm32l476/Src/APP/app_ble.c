@@ -13,13 +13,14 @@
 
 
 struct bdinfo{			
-				uint8_t	num_group;
-				uint8_t dis_status;
-				uint8_t bat_soc;
-				uint8_t lost_flag;
+				uint32_t	num_group;
+				uint32_t dis_status;
+				uint32_t bat_soc;
+				uint32_t lost_flag;
+				uint32_t bbind_sucess;
 				uint8_t version_bd[8];
 				uint8_t addr[12];
-				uint8_t bbind_sucess;
+				
 				
 };
 
@@ -56,6 +57,7 @@ extern uint8_t gsn_buf[12];
 uint8_t holdtask_flag =0;
 
 /***********************test mode*************************/
+uint8_t  copy_addr_group(void);
 uint8_t ble_uart_at_handle_rd(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t ble_uart_at_handle_rn(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t ble_uart_at_handle_sd(uint8_t *data, uint16_t len, uint8_t idx);
@@ -88,6 +90,7 @@ uint8_t ble_set_bleaddr(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_at_hold_task(uint8_t *data, uint16_t len, uint8_t at_index);
 uint8_t ble_at_start_task(uint8_t *data, uint16_t len, uint8_t at_index);
+uint8_t ble_at_subind_back(uint8_t *data, uint16_t len, uint8_t at_index);
 typedef enum{
 	BDINFO =0,
 	VERSION,
@@ -117,7 +120,7 @@ static const ble_at_symbol ble_uart_at_table[BLE_SUPPORT_UART_AT_NUM] = {
   {ble_airplanmode_handle,(uint8_t *)"airplanemode:"},
 	{ble_at_handle_call,(uint8_t *)"call:"},
 	{ble_at_hold_task,(uint8_t *)"HoldTask"},
-	{ble_open_lock_back,(uint8_t *)"subind:"},
+	{ble_at_subind_back,(uint8_t *)"subind:"},
 	{ble_at_start_task, (uint8_t *)"hello"},
 	{ble_uart_at_handle_ble_getmid, (uint8_t *)"GMID##"},
 	{ble_uart_at_handle_write_sn, (uint8_t *)"FTSN"},
@@ -189,7 +192,61 @@ uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index)
 		//aoa_send_response(data, len);
 	return 0;
 }
+uint8_t subind_back_buf_bak[50];
+extern uint8_t ubind_back[50];
+extern uint8_t ubind_len ;
+extern uint8_t unbind_id_buf[12];
+extern uint8_t send_wl_temp1[100][15];
+extern uint8_t bbind_num;
 
+uint8_t ble_at_subind_back(uint8_t *data, uint16_t len, uint8_t at_index)
+{
+
+
+	uint8_t subind_dev_buf[12];
+	uint8_t i,j,lenth=0;
+	lenth = strlen("subind:");
+	
+   if(0 == memcmp(subind_back_buf_bak,data,len))
+			return 0 ;
+	  memcpy(subind_dev_buf,&data[lenth],12);
+	 for(i =0;i<len;i++){
+			if(data[i] =='#'&&data[i+1] == '#'){
+				if(data[i-2] == 'o' && data[i-1] == 'k'){
+				if(0 == memcmp(subind_dev_buf,unbind_id_buf,12)){
+							//send_light_commnd =0;
+					     aoa_send_response(ubind_back, ubind_len);
+					
+					
+							for(j =0 ;j<100;j++){
+								printf("send_wl_temp %s  \r\n",send_wl_temp1[j]);
+										if(0 == memcmp(unbind_id_buf,send_wl_temp1[j],12)){
+												printf("unbind_id_buf %s %s \r\n",unbind_id_buf,send_wl_temp1[j]);
+													memset(send_wl_temp1[j],0x00,15);
+											if(bbind_num >= 1)
+												   bbind_num-=1;
+										}
+										
+							
+							}
+							copy_addr_group();
+					break;
+				}
+				}
+			
+			}
+	 
+	 
+	 }
+	 
+	 
+	 
+	 
+	  memcpy(subind_back_buf_bak,data,len);
+		//aoa_send_response(data, len);
+	return 0;
+
+}
 uint8_t ble_at_hold_task(uint8_t *data, uint16_t len, uint8_t at_index)
 {
 
@@ -286,7 +343,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 				devinfo_flag =1;
 				devinfo_start_flag =1;
 			}
-
+//devinfo:132011260001,01,00,01## 
 			
 			if(len%31 !=0){
 				return 0;
@@ -296,18 +353,18 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 					if(data[i] == 'd'){
 						if(memcmp(&data[i],"devinfo:",8) ==0){
 								group_num = (data[i+lenth+13] - '0')*10 + (data[i+lenth+14] - '0');
-							  printf("devinfo groupnum %d  %d \r\n",i,group_num);
+							  printf("ble gnum %d  %d \r\n",i,group_num);
 								for(j =0;j<100;j++){
-									 printf("devinfo dev gnu %d  \r\n",i,bd_info[j].num_group);
+									// printf("bds gnum %d %d \r\n",i,bd_info[j].num_group);
 									if(bd_info[j].num_group == group_num){
 										
 										if(memcmp(bd_info[j].addr,&data[i+lenth],12) == 0){
 								      
-											bd_info[j].dis_status = (data[i+lenth+16] - '0' )*10 + (data[i+lenth+17] - '0' );
+											bd_info[j].dis_status = (data[i+lenth+17] - '0' );
 							
 											bd_info[j].bat_soc = (data[i+lenth+19] - '0' )*10 + (data[i+lenth+20] - '0' );
 											bd_info[j].lost_flag = 1;
-											printf("devinfo  bd_info[j].dis_status %d  %d  %d\r\n",bd_info[j].dis_status,bd_info[j].bat_soc,bd_info[j].lost_flag);
+											printf("devinfo  %d %d  %d  \r\n",j,bd_info[j].dis_status,bd_info[j].lost_flag);
 						}				
 						
 				}else{
@@ -336,18 +393,10 @@ void ReportTimerCallback(void)
 		  report_once++;
 			report_count =0;
 	}else{
-		printf("sunmny  bd_info.addr:%s bd_info[%d].dis_status %d  %d %d %d \r\n",bd_info[report_count].addr, report_count,bd_info[report_count].dis_status,bd_info[report_count].bat_soc,bd_info[report_count].lost_flag,report_once);
-			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==1)&&(bd_info[report_count].dis_status ==0)){
-			
-					if(bd_info[report_count].bat_soc ==0)
-						report_buf[5] = '0';
-					else
-						report_buf[5] = '4';
-				   memcpy(&report_buf[10],bd_info[report_count].version_bd,6);
-					aoa_at_handle_bbeatnow_bdev(bd_info[report_count].addr,report_buf);
-				  bd_info[report_count].lost_flag=0;
-				
-			}else if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==0)&&(REPORT_TIMES ==report_once)){
+		if(report_count ==0 )
+			printf("sunmny  %d %d  \r\n",bd_info[report_count].dis_status,bd_info[report_count].lost_flag);
+	
+			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==0)&&(REPORT_TIMES ==report_once)){
 										memcpy(lost_buf,"+BPALERT:",9);
 										memcpy(&lost_buf[9],bd_info[report_count].addr,12);
 										memcpy(&lost_buf[21],",",1);
@@ -371,7 +420,8 @@ void ReportTimerCallback(void)
 									 aoa_send_response(lost_buf,30);
 										bd_info[report_count].dis_status =0;
 			
-			}else if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].bat_soc ==0)){
+			}
+			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].bat_soc ==0)){
 			
 			
 										memcpy(report_battery,"+BPALERT:",9);
@@ -387,6 +437,18 @@ void ReportTimerCallback(void)
 											memcpy(&report_battery[25],aoa_at_end_tok,4);
 			
 						        aoa_send_response(report_battery,29);
+			}
+			if((bd_info[report_count].addr[0] == '1')){
+			
+					if(bd_info[report_count].bat_soc ==0)
+						report_buf[5] = '0';
+					else
+						report_buf[5] = '4';
+					
+				   memcpy(&report_buf[10],bd_info[report_count].version_bd,6);
+					aoa_at_handle_bbeatnow_bdev(bd_info[report_count].addr,report_buf);
+				  bd_info[report_count].lost_flag=0;
+					
 			}
 	
 			if(REPORT_TIMES ==report_once)
