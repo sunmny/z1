@@ -78,7 +78,7 @@ void AoaUartTask(void const * argument)
 
 		ulTaskNotifyTake( pdTRUE, portMAX_DELAY);
 		aoa_uart_receive_and_handle();
-		printf("AoaUartTask ---3\r\n");
+	//	printf("AoaUartTask ---3\r\n");
 
 		// osDelay(400);
 		//hw_uart1_send_dma("hello ",6);

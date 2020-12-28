@@ -1902,7 +1902,7 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
  
   set_command_type(0xf1);
 	if(!get_timer_status()){
-				 osTimerStart(LedTimerHandle, 3500);
+				 osTimerStart(LedTimerHandle, 4500);
 					set_timer_status(1);
 	}
 	//save_dev_addr();
@@ -2547,7 +2547,7 @@ uint8_t aoa_at_handle_bbind(uint8_t *data, uint16_t len, uint8_t idx)
 	//ble_send_response(apn_buf, totallen);
 	
 if(task_flag_start &&(!get_timer_status())){
-	  osTimerStart (LedTimerHandle, 3500);
+	  osTimerStart (LedTimerHandle, 4500);
 	  set_timer_status(1);
 	
 }
@@ -2604,7 +2604,7 @@ printf("aoa_at_handle_bunbind \r\n");
 						save_nv_buf[0] = '0';
 		      // memcpy(response,"ubind:",6);
 		     if(!get_timer_status()){
-			   osTimerStart(LedTimerHandle,3500);
+			   osTimerStart(LedTimerHandle,4500);
 		     set_timer_status(1);
 		   }
 				devinfo_flag =0;
@@ -2710,7 +2710,7 @@ printf("aoa_at_handle_bunbind \r\n");
 		//ble_send_response(call_buf,24);
 	ble_send_response(response, totallen);
 	if(!get_timer_status()){
-				 osTimerStart(LedTimerHandle, 3500);
+				 osTimerStart(LedTimerHandle, 4500);
 					set_timer_status(1);
 	}
 	
@@ -2791,7 +2791,7 @@ printf("aoa_at_handle_bunbind \r\n");
 		//ble_send_response(call_buf,24);
 	ble_send_response(response, totallen);
 	if(!get_timer_status()){
-				 osTimerStart(LedTimerHandle, 3500);
+				 osTimerStart(LedTimerHandle, 4500);
 					set_timer_status(1);
 	}
 	
@@ -2962,7 +2962,9 @@ uint8_t aoa_at_handle_bbbeat(uint8_t *data, uint16_t len, uint8_t idx)
 }
 uint8_t light_response[60];
 uint8_t light_back_len =0;
-
+uint8_t command_stop_flag =0;
+uint8_t light_command_bak[50];
+uint8_t light_command_again =0;
 uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 {
 	osStatus ret;
@@ -2973,12 +2975,19 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 	uint8_t id1,id2;
 	//uint8_t response[60];
 	uint8_t call_buf[25];
+	printf("light %s \r\n",data);
+	if(0== memcmp(light_command_bak,data,len))
+		    light_command_again ++;
+	else{
+			  light_command_again =0;
+		}
+	
 	
 	
 	lenth = strlen("AT+BLIGHT=");
 	
 
-
+  memset(call_buf,0x00,25);
 	memcpy(call_buf,"call:",5);
 	
 	lenth1=strlen("+BLIGHT:");
@@ -2997,6 +3006,7 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 	
 		call_buf[20] = ',';
 		
+	command_stop_flag = 1;
 	
 	//printf("light %c \r\n",data[lenth+15]);
 	if(data[26] == 'N'){
@@ -3019,9 +3029,10 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 				 osTimerStop(LedTimerHandle);
 					set_timer_status(0);
 	}
+	printf("light call  %s \r\n",call_buf);
 		ble_send_response(call_buf,24);
 	if(!get_timer_status()){
-				 osTimerStart(LedTimerHandle, 3500);
+				 osTimerStart(LedTimerHandle, 4500);
 					set_timer_status(1);
 	}
 	
@@ -3034,6 +3045,7 @@ uint8_t aoa_at_handle_blight(uint8_t *data, uint16_t len, uint8_t idx) //需要改
 	memcpy(&light_response[totallen],aoa_at_end_tok,AT_END_TOK_LEN);
 	totallen+=AT_END_TOK_LEN;
 	light_back_len = totallen;
+	memcpy(light_command_bak,data,len);
 	//ret = aoa_send_response(response,totallen);
 	return 0;
 }

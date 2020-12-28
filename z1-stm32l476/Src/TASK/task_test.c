@@ -222,7 +222,7 @@ void mytestTask1(void const * argument)
 		uint8_t i =0;
 
 	while(1){
-		printf("mytestTask1---1\r\n");
+		//printf("mytestTask1---1\r\n");
 		
 		osDelay(500);
 		if(save_flas){

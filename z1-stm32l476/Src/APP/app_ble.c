@@ -17,6 +17,7 @@ struct bdinfo{
 				uint32_t dis_status;
 				uint32_t bat_soc;
 				uint32_t lost_flag;
+				uint32_t lost_count;
 				uint32_t bbind_sucess;
 				uint8_t version_bd[8];
 				uint8_t addr[12];
@@ -159,6 +160,8 @@ extern uint8_t light_response[60];
 extern uint8_t light_back_len;
 uint8_t light_back_buf_bak[50];
 extern uint8_t send_light_commnd;
+extern uint8_t command_stop_flag;
+extern uint8_t light_command_again;
 uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index)
 {
 //call:132011260038,01,01,LED on ok##            2640回复的开启LED完整数据格式
@@ -166,16 +169,20 @@ uint8_t ble_at_handle_call(uint8_t *data, uint16_t len, uint8_t at_index)
 	uint8_t call_dev_buf[12];
 	uint8_t i,lenth=0;
 	lenth = strlen("call:");
-	
-   if(0 == memcmp(light_back_buf_bak,data,len))
+		
+   if(0 == memcmp(light_back_buf_bak,data,len) &&( light_command_again ==0))
 			return 0 ;
 	memcpy(call_dev_buf,&data[lenth],12);
 	 for(i =0;i<len;i++){
 			if(data[i] =='#'&&data[i+1] == '#'){
 				if(data[i-2] == 'o' && data[i-1] == 'k'){
+					printf("call dev buf %s \r\n",call_dev_buf);
+					printf("call compare  %s \r\n",&light_response[10]);
 				if(0 == memcmp(call_dev_buf,&light_response[10],12)){
 							send_light_commnd =0;
+					command_stop_flag =0;
 					     aoa_send_response(light_response, light_back_len);
+					printf(" light_response  %s \r\n",light_response);
 					break;
 				}
 				}
@@ -353,7 +360,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 					if(data[i] == 'd'){
 						if(memcmp(&data[i],"devinfo:",8) ==0){
 								group_num = (data[i+lenth+13] - '0')*10 + (data[i+lenth+14] - '0');
-							  printf("ble gnum %d  %d \r\n",i,group_num);
+							 // printf("ble gnum %d  %d \r\n",i,group_num);
 								for(j =0;j<100;j++){
 									// printf("bds gnum %d %d \r\n",i,bd_info[j].num_group);
 									if(bd_info[j].num_group == group_num){
@@ -364,7 +371,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 							
 											bd_info[j].bat_soc = (data[i+lenth+19] - '0' )*10 + (data[i+lenth+20] - '0' );
 											bd_info[j].lost_flag = 1;
-											printf("devinfo  %d %d  %d  \r\n",j,bd_info[j].dis_status,bd_info[j].lost_flag);
+											printf("get  %d %d  %d  \r\n",j,bd_info[j].dis_status,bd_info[j].lost_flag);
 						}				
 						
 				}else{
@@ -382,7 +389,7 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 }
 
 uint8_t report_count =0;
-uint8_t report_once =0;
+
 void ReportTimerCallback(void)
 {
   uint8_t lost_buf[35];
@@ -390,13 +397,13 @@ void ReportTimerCallback(void)
 	uint8_t report_buf[22] = "5100041111201126000000";
 //	printf("report bd info\r\n");
 	if(report_count >99){
-		  report_once++;
+		 
 			report_count =0;
 	}else{
 		if(report_count ==0 )
-			printf("sunmny  %d %d  \r\n",bd_info[report_count].dis_status,bd_info[report_count].lost_flag);
+			printf("report  %d %d  \r\n",bd_info[report_count].dis_status,bd_info[report_count].lost_flag);
 	
-			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==0)&&(REPORT_TIMES ==report_once)){
+			if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].lost_flag ==0)){
 										memcpy(lost_buf,"+BPALERT:",9);
 										memcpy(&lost_buf[9],bd_info[report_count].addr,12);
 										memcpy(&lost_buf[21],",",1);
@@ -404,8 +411,14 @@ void ReportTimerCallback(void)
 										memcpy(&lost_buf[23],",",1);
 										memcpy(&lost_buf[24],"1",1);
 										memcpy(&lost_buf[25],aoa_at_end_tok,4);
-										report_once=0;
-										aoa_send_response(lost_buf,29);
+										if(bd_info[report_count].lost_count ==2){
+										   aoa_send_response(lost_buf,29);
+											bd_info[report_count].lost_count =0;
+										}
+										else
+										{
+											bd_info[report_count].lost_count++;
+										}
 			
 			}else if((bd_info[report_count].addr[0] == '1')&&(bd_info[report_count].dis_status ==1)){
 			
@@ -445,14 +458,18 @@ void ReportTimerCallback(void)
 					else
 						report_buf[5] = '4';
 					
+					if(bd_info[report_count].lost_flag ==1){
+							bd_info[report_count].lost_count =0;
+					}
+					
 				   memcpy(&report_buf[10],bd_info[report_count].version_bd,6);
-					aoa_at_handle_bbeatnow_bdev(bd_info[report_count].addr,report_buf);
+					if(command_stop_flag ==0)
+							aoa_at_handle_bbeatnow_bdev(bd_info[report_count].addr,report_buf);
 				  bd_info[report_count].lost_flag=0;
 					
 			}
 	
-			if(REPORT_TIMES ==report_once)
-				    report_once =0;
+		
 			report_count++;
 	}
 			
@@ -464,7 +481,7 @@ void devinfo_report_task(void const * argument)
 
 		while(1){
 				osDelay(100);
-				printf("start_flag %d %d  \r\n",devinfo_start_flag,task_flag_start);
+				//printf("start_flag %d %d  \r\n",devinfo_start_flag,task_flag_start);
 			if(devinfo_start_flag && task_flag_start)
 				     ReportTimerCallback();
 			if(uart_2640_flag ==0){
