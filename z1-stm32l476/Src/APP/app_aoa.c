@@ -79,6 +79,7 @@ typedef enum {
 	SUPPORT_AT_NUM
 } aoa_at_request;
 void set_command_type(uint8_t command);
+void BatTimerCallback(void);
 uint8_t aoa_at_handle_zsaveb(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_zupdate(uint8_t *data, uint16_t len, uint8_t idx);
 uint8_t aoa_at_handle_zbind(uint8_t *data, uint16_t len, uint8_t idx);
@@ -183,6 +184,10 @@ uint8_t aoa_at_handle_network(uint8_t *data, uint16_t len, uint8_t idx)
 				uint8_t back_buf[13];
 			  //printf("zdev_set.mydev_id = %s \r\n",zdev_set.mydev_id);
 	
+	
+			zdev_set.bat_chr_status =1;
+		BatTimerCallback();
+	zdev_set.bat_chr_status =0;
 				lenth = strlen("AT+NETWORK=");
 	
 		
@@ -381,7 +386,7 @@ uint8_t report_charing_soc(void)
 	zdev_set.zbat_soc_bak = zdev_set.zbat_soc;
 	zdev_set.zbat_soc1_bak = zdev_set.zbat_soc1;
 	
-	if(0 == task_flag_start)
+	if(1 == zdev_set.bat_chr_status ||zdev_set.bat1_chr_status ==1)
 			ble_send_response(report_charing_buf,32);
 }
 extern uint8_t version_info[10];
@@ -1270,7 +1275,10 @@ uint8_t aoa_at_handle_zbind(uint8_t *data, uint16_t len, uint8_t idx)
 		//zdev_set.zdev_num = 1;//get_zdevice_num(data,len,idx);
 	
 	//get_zdev_id(data,len,idx);
-
+		  // set_ble_power_off();
+			//  osDelay(100);
+			//set_ble_power();
+		 
 		memcpy(response,"+ZBIND:OK",9);
 		memcpy(&response[9],aoa_at_end_tok,4);
 	//totallen=make_zbind_response(response);
@@ -1899,14 +1907,14 @@ uint8_t test_begin(uint8_t *data, uint16_t len, uint8_t idx)
 	
 	memcpy(&save_nv_buf[10],zdev_set.other_id,12);
 	save_flas =1;
- 
+ set_ble_red_light(0);
   set_command_type(0xf1);
 	if(!get_timer_status()){
 				 osTimerStart(LedTimerHandle, 4500);
 					set_timer_status(1);
 	}
 	//save_dev_addr();
-	
+	 
 }
 
 
@@ -2625,6 +2633,7 @@ printf("aoa_at_handle_bunbind \r\n");
 					//clear_dev_nv();
 					memset(send_wl_temp,0x00,1500);
 					set_command_type(0xf3);
+			     set_ble_red_light(1);
 					//bbind_num =0;
 					printf("ubind0  %x  \r\n",command_type);
 					//BatTimerCallback();
@@ -2694,8 +2703,7 @@ printf("aoa_at_handle_bunbind \r\n");
 		//					save_dev_addd_nv();
 					}
 					//	if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
-				    if(bbind_num ==0)
-							set_ble_red_light(1);
+
 						
 						ubind_flag = 1;
 //						save_dev_addd_nv();
@@ -2776,8 +2784,7 @@ printf("aoa_at_handle_bunbind \r\n");
 					}
 					printf("response is %s \r\n",response);
 				//	if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
-					if(bbind_num ==0) 
-					  set_ble_red_light(1);
+					
 					
 					ubind_flag = 2;
 					//if(zdev_set.isMdev ==1)

@@ -299,8 +299,8 @@ void mytestTask1(void const * argument)
 			bd1_exist = 0xff;
 		}
 
-		if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
-							set_ble_red_light(1);
+		//if((zdev_set.bdevtask2_num == 0) && (zdev_set.bdevtask1_num == 0))
+							//set_ble_red_light(1);
 		
 		if(zdev_charger_status == 1){
 				if(charger_status_flag ==0){
@@ -444,7 +444,7 @@ void mytestTask1(void const * argument)
 		if(send_count_flag == 200){
 			aoa_at_handle_zlocation();
 			send_count_flag =0;
-		//	BatTimerCallback();
+			BatTimerCallback();
 		}else{
 			send_count_flag ++;
 		}
@@ -452,7 +452,7 @@ void mytestTask1(void const * argument)
 		}else{
 				if(send_count_flag == 100){
 			send_count_flag =0;
-			//BatTimerCallback();
+			BatTimerCallback();
 		}else{
 				send_count_flag ++;
 		}

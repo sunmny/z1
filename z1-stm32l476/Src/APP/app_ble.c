@@ -258,15 +258,23 @@ uint8_t ble_at_hold_task(uint8_t *data, uint16_t len, uint8_t at_index)
 {
 
 		holdtask_flag = 1;
-	  set_command_type(0xff);
+	if(get_command_type() == 0xf1)
+			set_command_type(0xff);
 
 
 
 }
 uint8_t ble_at_start_task(uint8_t *data, uint16_t len, uint8_t at_index)
 {
-		if(holdtask_flag ==1){		
-		   set_command_type(0xf1);
+	
+	uint8_t temp =0;
+	temp = get_command_type();
+		if(holdtask_flag ==1){	
+				if(temp != 0xff){
+					set_command_type(temp);
+				}else{
+		       set_command_type(0xf1);
+				}
 			holdtask_flag =0;
 		}
 
@@ -374,10 +382,10 @@ uint8_t aoa_at_handle_bdev_info(uint8_t *data, uint16_t len, uint8_t at_index)
 											printf("get  %d %d  %d  \r\n",j,bd_info[j].dis_status,bd_info[j].lost_flag);
 						}				
 						
-				}else{
-					 continue;	
+				   }else{
+					      continue;	
 				
-				}
+				    }
 			}		
 						}				
 					}
@@ -411,7 +419,7 @@ void ReportTimerCallback(void)
 										memcpy(&lost_buf[23],",",1);
 										memcpy(&lost_buf[24],"1",1);
 										memcpy(&lost_buf[25],aoa_at_end_tok,4);
-										if(bd_info[report_count].lost_count ==2){
+										if(bd_info[report_count].lost_count ==3){
 										   aoa_send_response(lost_buf,29);
 											bd_info[report_count].lost_count =0;
 										}
@@ -622,12 +630,13 @@ void ble_bind_back(uint8_t *data,uint8_t len)
 					lenth1+=1;
 					memcpy(&buf[lenth1],"OK",2);
 					lenth1+=2;
-					set_ble_red_light(0);
+					//set_ble_red_light(0);
 		
 						memcpy(&buf[lenth1],aoa_at_end_tok,4);
 						lenth1 +=4;
 					printf("bind buf back %s \r\n",buf);
 					memcpy(bind_bak_buf,data,len);
+			printf("bind buf back %s %s\r\n",bbind_back_dev_buf,addr_buf);
 				if(0 == memcmp(bbind_back_dev_buf,addr_buf,12))
 					aoa_send_response(buf, lenth1);
 					
